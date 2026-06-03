@@ -20,9 +20,11 @@ The full ResolveDNA pipeline has five stages; the Flex handles the wet-lab liqui
 | 4 | Next-Generation Sequencing (Illumina) | off-instrument |
 | 5 | BaseJumper analysis (QC → WGS variant calling) | off-instrument |
 
-Thermal cycling is currently handled on an **external bench cycler** — the protocol pauses and prompts for the plate handoff. On-deck Thermocycler / Temperature modules are a possible future integration.
+Thermal cycling is handled on an **external bench cycler** — the protocol pauses and prompts for the plate handoff. On-deck Thermocycler / Temperature modules are a possible future integration.
 
 ## What the Flex automates
+
+`resolvedna_wgs_flex.py` runs the full kit end-to-end across three sections, with operator handoffs (thermal cycling, vortex/spin, moving the plate on/off the magnet) prompted via `protocol.pause()`.
 
 **Section 1 — WGA**
 - Add Lysis Mix (L1 / L2 / L3, 3 µL/rxn) → RT incubation
@@ -43,51 +45,52 @@ Thermal cycling is currently handled on an **external bench cycler** — the pro
 ## Hardware & consumables
 
 - Opentrons Flex
-- 8-channel 1000 µL pipette (washes / large transfers)
-- 8-channel 50 µL pipette — *planned*, for the 3–6 µL reagent adds
-- Magnetic Block — *planned*, for bead cleanup
-- 12-well reservoirs, 96-well PCR plates, Flex tip racks
+- 8-channel 1000 µL pipette (right mount) — all liquid handling
+- Opentrons Magnetic Block GEN1 — bead cleanup
+- 12-well reservoirs ×2, 96-well PCR plates ×2 (sample + output), Flex 1000 µL tip racks ×2
 - External: bench thermal cycler, Qubit (HS dsDNA), Agilent TapeStation
 
-## Deck layout (current — barebones smoke test)
+## Deck layout
 
 ```
         col 1              col 2              col 3
-  A   [    .    ]      [    .    ]      [  Trash  ]
-  B   [    .    ]      [ Tips    ]      [    .    ]
-                       [ 1000 µL ]
-  C   [Reservoir]      [    .    ]      [    .    ]
-  D   [  Plate  ]      [    .    ]      [    .    ]
+  A   [Tips 50µL]      [Tips 1000]      [Tips 1000]
+  B   [    .    ]      [ Sample  ]      [ Source  ]
+                       [  Plate  ]      [Reservoir]
+  C   [    .    ]      [Mag Block]      [ Output  ]
+                                        [  Plate  ]
+  D   [  Trash  ]      [Bead/Wash]      [    .    ]
+                       [Reservoir]
 ```
 
-Plenty of open slots to add the 50 µL tips, Mag Block, and output plate as the protocol fills out.
+**Source reservoir (B3):** A1 Lysis · A2 Reaction · A3 DNA Prep · A4 FERAT · A5 LP2L · A6 Adapters · A7 Amp Mix
+**Bead/wash reservoir (D2):** A1 Resolve Beads · A2 80 % EtOH · A3 Elution Buffer · A12 waste
 
 ## Repository structure
 
 ```
-resolvedna_wgs_flex.py    Barebones starter: deck setup + liquid-handling smoke test.
-                          WGA / library prep / cleanup stubbed as TODO sections.
+resolvedna_wgs_flex.py    Full end-to-end protocol: WGA → library prep → bead cleanup.
+                          Run end-to-end on the Flex.
 README.md                 This file.
 ```
 
-### Running the smoke test
+### Running it
 
-1. Fill reservoir well **A1** with ~800 µL water (≥ `TEST_VOLUME × 8 × NUM_COLUMNS`).
-2. Import `resolvedna_wgs_flex.py` into the Opentrons App.
-3. Follow labware placement + calibration prompts and run.
+`NUM_SAMPLES` (multiple of 8) is at the top of the file.
 
-`NUM_SAMPLES` (multiple of 8) and `TEST_VOLUME` are at the top of the file. The smoke test exercises the full pick-up → aspirate → dispense → drop motion path so calibration and labware are verified before any reagents are involved.
+- **Dry motion/volume check:** load water in the source + bead/wash reservoir wells and run as-is.
+- **Real run:** prepare the master mixes off-deck per the kit guide, load them into the mapped reservoir wells, and follow each `pause()` prompt for the thermal-cycler and magnet handoffs.
+
+Import `resolvedna_wgs_flex.py` into the Opentrons App and follow the labware placement + Labware Position Check prompts before running.
 
 ## Roadmap
 
 - [x] Repo + collaborator setup
-- [x] Barebones starter (deck + smoke test)
-- [ ] Add 8-channel 50 µL for accurate small-volume reagent adds
-- [ ] Section 1 — WGA reagent additions + thermal-cycler handoffs
-- [ ] Section 2 — library prep (DNAPREP → FERAT → ligation → LIB-AMP)
-- [ ] Add Mag Block + gripper labware moves
-- [ ] Section 3 — bead cleanup
+- [x] Full end-to-end protocol (WGA → library prep → bead cleanup)
+- [ ] Add 8-channel 50 µL for more accurate small-volume reagent adds
+- [ ] Gripper-driven plate moves on/off the Mag Block (replace manual handoffs)
 - [ ] Parameterize via Opentrons Runtime Parameters (sample count, volumes)
+- [ ] EM-seq / epigenetic-clock protocol (methylation, separate file)
 
 ## References
 
