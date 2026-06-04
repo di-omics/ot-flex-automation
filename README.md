@@ -26,7 +26,7 @@ Sequencing-ready libraries for **clinical disease-risk profiling**, **gene-thera
 | `protocols/emseq_epigenetic_clock_flex.py` | NEBNext EM-seq v2 (NEB #E8015) | Genome-wide methylation libraries (aging-clock input) | **Draft** - motion-test ready, not yet bench-validated |
 | `protocols/tipseq_epigenome_flex.py` | TIP-seq (Tn5 + IVT, low-input CUT&Tag) | Histone-mark / TF epigenomic libraries | **Draft** - adaptation, not yet bench-validated |
 
-All three share the same conventions: a `CONFIG` block up top, off-deck steps driven by `protocol.pause()`, and an 8-channel 1000 µL pipette on the right mount.
+All three share the same conventions: a `CONFIG` block up top, off-deck steps driven by `protocol.pause()`, and an 8-channel 1000 µL pipette on the right mount, running **200 µL filter tips** (`opentrons_flex_96_filtertiprack_200ul`) - the only Flex pipette that takes 200 µL tips, and every transfer here is ≤200 µL.
 
 ---
 
@@ -55,7 +55,7 @@ Tn5-based CUT&Tag with T7 in-vitro transcription to amplify genome coverage from
 
 TIP-seq is predominantly manual single-cell work, so the automation boundary is **tagmentation -> PCR**: the robot does every enzymatic / master-mix addition and all five SPRI cleanups; the upstream ConA binding, antibody steps, and pA-Tn5 washes stay manual (pre-flight). The signature TIP-seq **bead carry-through** (AMPure beads added at the first cleanup are retained through gap fill -> IVT -> RNA SPRI -> 2nd-strand SPRI, discarded only at the fragmentation SPRI) is encoded via a `keep_beads` flag on the `spri()` helper. Pre- and post-SPRI Qubit checkpoints are built in as pauses.
 
-**Tips:** this protocol uses **200 µL filter tips** (`opentrons_flex_96_filtertiprack_200ul`) on the 8-channel 1000 µL pipette - the only Flex pipette compatible with 200 µL tips. 3 racks + one mid-run refill cover a single column.
+**Tips:** like the other protocols it runs 200 µL filter tips, but TIP-seq is the most tip-hungry - 3 racks + one mid-run refill (`reset_tipracks`) cover a single column across all the carry-through SPRIs.
 
 Enzyme reservoir (B3): A1 Tag · A2 ProtK · A3 Taq · A4 IVT · A5 Hexamer · A6 RT · A7 RNase H · A8 sss · A9 frag-Tn5 · A10 GuHCl · A11 PCR · A12 EDTA.
 
@@ -67,7 +67,7 @@ Known simplifications for real runs are listed in each file header (small-volume
 
 - Opentrons Flex + 8-channel 1000 µL pipette (right mount)
 - Opentrons Magnetic Block GEN1
-- 12-well reservoirs, 96-well PCR plates, Flex 1000 µL tip racks (200 µL filter tips for TIP-seq)
+- 12-well reservoirs, 96-well PCR plates, 200 µL filter tip racks (all protocols; 2 racks for WGS, 3 for EM-seq and TIP-seq)
 - External: bench thermal cycler, Qubit (HS dsDNA), Agilent TapeStation; Covaris/UltraShear for EM-seq fragmentation
 
 ## Running a protocol

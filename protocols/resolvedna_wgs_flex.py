@@ -8,9 +8,10 @@ from opentrons import protocol_api
 # sequencing-ready Illumina libraries from single cells / nuclei.
 #
 # Status: run end-to-end on the Flex. All liquid handling uses the
-# 8-channel 1000 uL pipette. Steps the Flex can't do (thermal cycling,
-# vortex/spin, moving the plate on/off the magnet) are operator handoffs
-# via protocol.pause() - read each pause message before resuming.
+# 8-channel 1000 uL pipette running 200 uL FILTER tips (every transfer
+# is <=200 uL). Steps the Flex can't do (thermal cycling, vortex/spin,
+# moving the plate on/off the magnet) are operator handoffs via
+# protocol.pause() - read each pause message before resuming.
 #
 # Reagent source map - 12-well reservoir in B3:
 #   A1 = Lysis Mix     A2 = Reaction Mix   A3 = DNA Prep Mix
@@ -30,7 +31,7 @@ metadata = {
     "description": (
         "WGA + Library Prep + bead cleanup on Opentrons Flex. "
         "Thermal cycling and plate moves are manual handoffs (pauses). "
-        "the vendor whole-genome sequencing kit."
+        "the vendor whole-genome sequencing kit. 200 uL filter tips."
     ),
 }
 
@@ -39,21 +40,24 @@ metadata = {
 # ══════════════════════════════════════════════════════════════════════
 NUM_SAMPLES = 8   # must be multiple of 8
 
-# Using 8-channel 1000uL for all steps - demonstrates high-throughput capability
+# 8-channel 1000 uL pipette runs 200 uL FILTER tips for all steps.
+# (The 1000 uL pipette is the only Flex 8-channel that takes 200 uL tips;
+#  every transfer here is <=200 uL, so 200 uL filter tips are the fit.)
 LEFT_PIPETTE  = "flex_1channel_50"    # not used - kept for config completeness
-RIGHT_PIPETTE = "flex_8channel_1000"  # primary pipette for all liquid handling
+RIGHT_PIPETTE = "flex_8channel_1000"  # primary pipette (running 200 uL filter tips)
 
 SLOT_SAMPLE_PLATE = "B2"
 SLOT_OUTPUT_PLATE = "C3"
 SLOT_SOURCE_PLATE = "B3"   # 12-well reservoir - reagents in A1-A7
 SLOT_RESERVOIR    = "D2"   # 12-well reservoir - beads/EtOH/elution in A1-A3, waste A12
-SLOT_TIPS_50      = "A1"   # not used - 8-channel handles all steps
-SLOT_TIPS_1000    = "A2"
-SLOT_TIPS_1000B   = "A3"   # second tip rack - 8-channel uses many tips
+SLOT_TIPS_200A    = "A1"   # 200 uL filter tips
+SLOT_TIPS_200B    = "A2"   # 200 uL filter tips (8-channel uses many tips)
 SLOT_MAG_BLOCK    = "C2"   # Opentrons Magnetic Block GEN1
 SLOT_TRASH        = "D1"
 
 USE_OPENTRONS_MAG_MODULE = True  # True = Opentrons Mag Block; False = passive rack (manual)
+
+ETOH_VOL = 180.0   # 80% EtOH wash (capped under the 200 uL tip)
 
 # Thermal cycler programs (external bench cycler):
 # DNA Amplification (lid 70C):  30C 2.5h -> 65C 3min -> 4C hold
@@ -103,14 +107,13 @@ def run(protocol: protocol_api.ProtocolContext):
     reservoir = protocol.load_labware(
         "nest_12_reservoir_15ml", SLOT_RESERVOIR, label="Reservoir")
 
-    tips_50    = protocol.load_labware("opentrons_flex_96_tiprack_50ul",   SLOT_TIPS_50)
-    tips_1000  = protocol.load_labware("opentrons_flex_96_tiprack_1000ul", SLOT_TIPS_1000)
-    tips_1000b = protocol.load_labware("opentrons_flex_96_tiprack_1000ul", SLOT_TIPS_1000B)
+    tips_200a = protocol.load_labware("opentrons_flex_96_filtertiprack_200ul", SLOT_TIPS_200A)
+    tips_200b = protocol.load_labware("opentrons_flex_96_filtertiprack_200ul", SLOT_TIPS_200B)
     trash     = protocol.load_trash_bin(SLOT_TRASH)
 
     # Pipettes
-    # 8-channel 1000uL handles all steps for high-throughput demo
-    p8_1000 = protocol.load_instrument(RIGHT_PIPETTE, mount="right", tip_racks=[tips_1000, tips_1000b])
+    # 8-channel 1000 uL pipette, running 200 uL filter tips for all steps
+    p8_1000 = protocol.load_instrument(RIGHT_PIPETTE, mount="right", tip_racks=[tips_200a, tips_200b])
 
     # Source wells (water for motion test; real reagents for liquid test)
     lysis_src    = source_plate["A1"]
@@ -274,14 +277,14 @@ def run(protocol: protocol_api.ProtocolContext):
     for wash in range(2):
         for col in cols:
             p8_1000.pick_up_tip()
-            p8_1000.aspirate(200, etoh.bottom(z=5))
-            p8_1000.dispense(200, col[0].bottom(z=5))
+            p8_1000.aspirate(ETOH_VOL, etoh.bottom(z=5))
+            p8_1000.dispense(ETOH_VOL, col[0].bottom(z=5))
             p8_1000.drop_tip()
         protocol.delay(seconds=30, msg=f"EtOH wash {wash+1}/2")
         for col in cols:
             p8_1000.pick_up_tip()
-            p8_1000.aspirate(200, col[0].bottom(z=5))
-            p8_1000.dispense(200, waste.bottom(z=5))
+            p8_1000.aspirate(ETOH_VOL, col[0].bottom(z=5))
+            p8_1000.dispense(ETOH_VOL, waste.bottom(z=5))
             p8_1000.drop_tip()
 
     protocol.pause("Remove residual EtOH with P20. Air dry 3 min - do NOT over-dry.")
