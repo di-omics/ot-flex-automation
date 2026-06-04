@@ -2,6 +2,16 @@
 
 Opentrons Flex automation for genomics library prep. Each protocol turns a single-cell, methylation, or chromatin kit into a reproducible, walkaway liquid-handling run, with the steps the Flex can't do (thermal cycling, fragmentation, magnet moves) surfaced as operator handoffs.
 
+## TL;DR - the why
+
+Three Flex protocols, three questions on the road from genome to intervention:
+
+1. **WGS** (whole-genome sequencing) - **gene-editing safety.** Single-cell whole-genome sequencing to catch off-target edits and confirm an edit or gene therapy is clean.
+2. **Epigenetic clock** (EM-seq) - **a longevity readout.** Genome-wide methylation as a quantitative measure of biological age - the gauge for whether a longevity intervention actually moves the needle.
+3. **TIP-seq** - **disease risk to target.** Low-input epigenomic profiling that follows non-coding GWAS risk variants to the regulatory elements they act through, turning a statistical hit into a druggable target.
+
+One bench engine, taking human-health questions from variant to validated intervention.
+
 ## Objective
 
 Sequencing-ready libraries for **clinical disease-risk profiling**, **gene-therapy safety profiling**, **epigenetic-aging-clock** analysis, and **low-input epigenomic profiling that maps human disease risk from GWAS loci to target** - built on the Flex for tight well-to-well consistency and minimal hands-on time.
