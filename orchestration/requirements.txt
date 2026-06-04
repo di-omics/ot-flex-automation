@@ -1,0 +1,4 @@
+# optional, per backend (the decision engine + CSV reader need none of these)
+opencv-python>=4.9   # vision/pellet_detector.py
+numpy>=1.26          # vision
+requests>=2.31       # flex_link.py live calls
