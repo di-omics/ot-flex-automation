@@ -29,9 +29,15 @@ from opentrons import protocol_api
 # Two PCR plates (B2, C3) ping-pong through the 3 cleanups; the operator
 # swaps a fresh plate into the spent-beads slot when prompted.
 #
+# TIPS: 200 uL FILTER tips only (opentrons_flex_96_filtertiprack_200ul),
+#   run on the 8-channel 1000 uL pipette - the only Flex pipette
+#   compatible with 200 uL tips. Every transfer is <=200 uL. Three racks
+#   (A1/A2/A3) cover the ~34 tip pickups one column needs across the 3
+#   SPRI cleanups (a single column would exhaust 2 racks mid-run).
+#
 # CAVEATS for a real run (see repo roadmap):
-#   - 2.5 uL adaptor and 1 uL Stop are below the 1000 uL pipette's
-#     reliable range - use an 8-channel 50 uL for those adds.
+#   - 2.5 uL adaptor and 1 uL Stop are below the pipette's reliable range
+#     even on 200 uL tips - use an 8-channel 50 uL for those adds.
 #   - liquid waste (A12) will overflow a 15 mL trough past ~1 column;
 #     route to the waste chute or empty between cleanups for full plates.
 #   - in-place cleanups + manual magnet moves are the simplification
@@ -47,7 +53,7 @@ metadata = {
     "description": (
         "NEBNext EM-seq v2 (NEB #E8015) on Opentrons Flex. Genome-wide "
         "methylation libraries for epigenetic-aging-clock analysis. "
-        "DRAFT - not yet bench-validated."
+        "200 uL filter tips. DRAFT - not yet bench-validated."
     ),
 }
 
@@ -58,16 +64,16 @@ NUM_SAMPLES = 8     # must be a multiple of 8
 OVERAGE     = 1.15  # master-mix overage factor
 PCR_CYCLES  = 8     # by input: 200ng 4-5 / 50ng 5-6 / 10ng 8 / 1ng 11 / 0.1ng 14
 
-RIGHT_PIPETTE = "flex_8channel_1000"  # all liquid handling
+RIGHT_PIPETTE = "flex_8channel_1000"  # all liquid handling (runs 200 uL filter tips)
 LEFT_PIPETTE  = "flex_1channel_50"    # not used - see CAVEATS (small-volume adds)
 
 SLOT_PLATE_A   = "B2"   # starts holding fragmented DNA
 SLOT_PLATE_B   = "C3"
 SLOT_SOURCE    = "B3"   # enzyme reservoir (A1-A10)
 SLOT_RESERVOIR = "D2"   # bead/wash reservoir (A1-A3, waste A12)
-SLOT_TIPS_50   = "A1"   # not used
-SLOT_TIPS_1000 = "A2"
-SLOT_TIPS_1000B= "A3"
+SLOT_TIPS_1    = "A1"   # 200 uL filter
+SLOT_TIPS_2    = "A2"   # 200 uL filter
+SLOT_TIPS_3    = "A3"   # 200 uL filter (3 racks: 3 SPRIs => ~34 tip pickups/column)
 SLOT_MAG_BLOCK = "C2"   # Opentrons Magnetic Block GEN1 (manual plate moves)
 SLOT_TRASH     = "D1"
 
@@ -87,6 +93,8 @@ Q5U_VOL         = 45.0
 BEADS_LIG,  RXN_LIG,  ELUTE_LIG,  XFER_LIG  = 93.0, 93.5, 29.0, 28.0   # 1.0X
 BEADS_PROT, RXN_PROT, ELUTE_PROT, XFER_PROT = 50.0, 51.0, 17.0, 16.0   # 1.0X
 BEADS_PCR,  RXN_PCR,  ELUTE_PCR,  XFER_PCR  = 72.0, 90.0, 21.0, 20.0   # 0.8X
+
+ETOH_VOL = 180.0   # 80% EtOH wash (capped under the 200 uL tip)
 
 NUM_COLUMNS = (NUM_SAMPLES + 7) // 8
 
@@ -144,7 +152,7 @@ def bead_cleanup(protocol, pip, src_plate, dst_plate, ncols,
     Plate moves on/off the magnet are operator handoffs (pauses)."""
     src = first_cols(src_plate, ncols)
     dst = first_cols(dst_plate, ncols)
-    sup_vol = round((rxn_vol + bead_vol) * 1.05, 1)
+    sup_vol = min(round((rxn_vol + bead_vol) * 1.05, 1), 190.0)   # cap under 200 uL tip
     mix_vol = min(round((rxn_vol + bead_vol) * 0.7, 1), 150)
 
     protocol.pause(f"{label} - vortex Sample Purification Beads (A1). Fresh 80% EtOH in A2.")
@@ -171,14 +179,14 @@ def bead_cleanup(protocol, pip, src_plate, dst_plate, ncols,
     for wash in range(2):
         for col in src:
             pip.pick_up_tip()
-            pip.aspirate(200, etoh.bottom(z=2))
-            pip.dispense(200, col[0].top(z=-2))   # down the side, don't disturb beads
+            pip.aspirate(ETOH_VOL, etoh.bottom(z=2))
+            pip.dispense(ETOH_VOL, col[0].top(z=-2))   # down the side, don't disturb beads
             pip.drop_tip()
         protocol.delay(seconds=30, msg=f"{label}: EtOH wash {wash+1}/2 (30 s)")
         for col in src:
             pip.pick_up_tip()
-            pip.aspirate(200, col[0].bottom(z=1))
-            pip.dispense(200, waste.top())
+            pip.aspirate(ETOH_VOL, col[0].bottom(z=1))
+            pip.dispense(ETOH_VOL, waste.top())
             pip.drop_tip()
 
     protocol.pause(
@@ -225,13 +233,13 @@ def run(protocol: protocol_api.ProtocolContext):
         "nest_12_reservoir_15ml", SLOT_RESERVOIR,
         label="Bead/wash (A1 beads A2 EtOH A3 elution A12 waste)")
 
-    tips_1000  = protocol.load_labware("opentrons_flex_96_tiprack_1000ul", SLOT_TIPS_1000)
-    tips_1000b = protocol.load_labware("opentrons_flex_96_tiprack_1000ul", SLOT_TIPS_1000B)
-    tips_50    = protocol.load_labware("opentrons_flex_96_tiprack_50ul",   SLOT_TIPS_50)
-    trash      = protocol.load_trash_bin(SLOT_TRASH)
+    tips_1 = protocol.load_labware("opentrons_flex_96_filtertiprack_200ul", SLOT_TIPS_1)
+    tips_2 = protocol.load_labware("opentrons_flex_96_filtertiprack_200ul", SLOT_TIPS_2)
+    tips_3 = protocol.load_labware("opentrons_flex_96_filtertiprack_200ul", SLOT_TIPS_3)
+    trash  = protocol.load_trash_bin(SLOT_TRASH)
 
     pip = protocol.load_instrument(RIGHT_PIPETTE, mount="right",
-                                   tip_racks=[tips_1000, tips_1000b])
+                                   tip_racks=[tips_1, tips_2, tips_3])
 
     # Reagent wells
     endprep   = source["A1"]
