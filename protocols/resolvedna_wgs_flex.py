@@ -1,21 +1,22 @@
 from opentrons import protocol_api
 
 # ──────────────────────────────────────────────────────────────────────
-# ResolveDNA WGS — Full End-to-End (Opentrons Flex)
+# ResolveDNA WGS – Full End-to-End (Opentrons Flex)
 #
 # Automates the BioSkryb ResolveDNA Whole Genome Single-Cell Core Kit
 # (TAS-068.5): WGA -> Library Prep -> Bead Cleanup, producing
 # sequencing-ready Illumina libraries from single cells / nuclei.
 #
 # Status: run end-to-end on the Flex. All liquid handling uses the
-# 8-channel 1000 uL pipette. Steps the Flex can't do (thermal cycling,
-# vortex/spin, moving the plate on/off the magnet) are operator handoffs
-# via protocol.pause() — read each pause message before resuming.
+# 8-channel 1000 uL pipette running 200 uL FILTER tips (every transfer
+# is <=200 uL). Steps the Flex can't do (thermal cycling, vortex/spin,
+# moving the plate on/off the magnet) are operator handoffs via
+# protocol.pause() – read each pause message before resuming.
 #
-# Reagent source map — 12-well reservoir in B3:
+# Reagent source map – 12-well reservoir in B3:
 #   A1 = Lysis Mix     A2 = Reaction Mix   A3 = DNA Prep Mix
 #   A4 = FERAT Mix     A5 = LP2L           A6 = Adapters       A7 = Amp Mix
-# Bead / wash reservoir — 12-well in D2:
+# Bead / wash reservoir – 12-well in D2:
 #   A1 = Resolve Beads A2 = 80% EtOH       A3 = Elution Buffer  A12 = waste
 #
 # Dry motion/volume check: load water in the source + bead wells and run
@@ -25,12 +26,12 @@ from opentrons import protocol_api
 requirements = {"robotType": "Flex", "apiLevel": "2.21"}
 
 metadata = {
-    "protocolName": "ResolveDNA WGS — Full End-to-End",
+    "protocolName": "ResolveDNA WGS – Full End-to-End",
     "author": "Di Hu",
     "description": (
         "WGA + Library Prep + bead cleanup on Opentrons Flex. "
         "Thermal cycling and plate moves are manual handoffs (pauses). "
-        "BioSkryb ResolveDNA kit TAS-068.5."
+        "BioSkryb ResolveDNA kit TAS-068.5. 200 uL filter tips."
     ),
 }
 
@@ -39,21 +40,24 @@ metadata = {
 # ══════════════════════════════════════════════════════════════════════
 NUM_SAMPLES = 8   # must be multiple of 8
 
-# Using 8-channel 1000uL for all steps — demonstrates high-throughput capability
-LEFT_PIPETTE  = "flex_1channel_50"    # not used — kept for config completeness
-RIGHT_PIPETTE = "flex_8channel_1000"  # primary pipette for all liquid handling
+# 8-channel 1000 uL pipette runs 200 uL FILTER tips for all steps.
+# (The 1000 uL pipette is the only Flex 8-channel that takes 200 uL tips;
+#  every transfer here is <=200 uL, so 200 uL filter tips are the fit.)
+LEFT_PIPETTE  = "flex_1channel_50"    # not used – kept for config completeness
+RIGHT_PIPETTE = "flex_8channel_1000"  # primary pipette (running 200 uL filter tips)
 
 SLOT_SAMPLE_PLATE = "B2"
 SLOT_OUTPUT_PLATE = "C3"
-SLOT_SOURCE_PLATE = "B3"   # 12-well reservoir — reagents in A1-A7
-SLOT_RESERVOIR    = "D2"   # 12-well reservoir — beads/EtOH/elution in A1-A3, waste A12
-SLOT_TIPS_50      = "A1"   # not used — 8-channel handles all steps
-SLOT_TIPS_1000    = "A2"
-SLOT_TIPS_1000B   = "A3"   # second tip rack — 8-channel uses many tips
+SLOT_SOURCE_PLATE = "B3"   # 12-well reservoir – reagents in A1-A7
+SLOT_RESERVOIR    = "D2"   # 12-well reservoir – beads/EtOH/elution in A1-A3, waste A12
+SLOT_TIPS_200A    = "A1"   # 200 uL filter tips
+SLOT_TIPS_200B    = "A2"   # 200 uL filter tips (8-channel uses many tips)
 SLOT_MAG_BLOCK    = "C2"   # Opentrons Magnetic Block GEN1
 SLOT_TRASH        = "D1"
 
 USE_OPENTRONS_MAG_MODULE = True  # True = Opentrons Mag Block; False = passive rack (manual)
+
+ETOH_VOL = 180.0   # 80% EtOH wash (capped under the 200 uL tip)
 
 # Thermal cycler programs (external bench cycler):
 # DNA Amplification (lid 70C):  30C 2.5h -> 65C 3min -> 4C hold
@@ -103,14 +107,13 @@ def run(protocol: protocol_api.ProtocolContext):
     reservoir = protocol.load_labware(
         "nest_12_reservoir_15ml", SLOT_RESERVOIR, label="Reservoir")
 
-    tips_50    = protocol.load_labware("opentrons_flex_96_tiprack_50ul",   SLOT_TIPS_50)
-    tips_1000  = protocol.load_labware("opentrons_flex_96_tiprack_1000ul", SLOT_TIPS_1000)
-    tips_1000b = protocol.load_labware("opentrons_flex_96_tiprack_1000ul", SLOT_TIPS_1000B)
+    tips_200a = protocol.load_labware("opentrons_flex_96_filtertiprack_200ul", SLOT_TIPS_200A)
+    tips_200b = protocol.load_labware("opentrons_flex_96_filtertiprack_200ul", SLOT_TIPS_200B)
     trash     = protocol.load_trash_bin(SLOT_TRASH)
 
     # Pipettes
-    # 8-channel 1000uL handles all steps for high-throughput demo
-    p8_1000 = protocol.load_instrument(RIGHT_PIPETTE, mount="right", tip_racks=[tips_1000, tips_1000b])
+    # 8-channel 1000 uL pipette, running 200 uL filter tips for all steps
+    p8_1000 = protocol.load_instrument(RIGHT_PIPETTE, mount="right", tip_racks=[tips_200a, tips_200b])
 
     # Source wells (water for motion test; real reagents for liquid test)
     lysis_src    = source_plate["A1"]
@@ -130,12 +133,12 @@ def run(protocol: protocol_api.ProtocolContext):
     out_cols = [output_plate.columns()[i]  for i in range(NUM_COLUMNS)]
 
     # ══════════════════════════════════════════════════════════════════
-    # SECTION 1 — WGA
+    # SECTION 1 – WGA
     # ══════════════════════════════════════════════════════════════════
 
     lv = lysis_vols(NUM_SAMPLES)
     protocol.pause(
-        f"LYSIS MIX — prepare off-deck if using real reagents:\n"
+        f"LYSIS MIX – prepare off-deck if using real reagents:\n"
         f"  L1: {lv['L1']} uL  L2: {lv['L2']} uL  L3: {lv['L3']} uL\n"
         f"For motion test: water already in source plate A1."
     )
@@ -149,7 +152,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     rv = reaction_vols(NUM_SAMPLES)
     protocol.pause(
-        f"REACTION MIX — prepare off-deck if using real reagents:\n"
+        f"REACTION MIX – prepare off-deck if using real reagents:\n"
         f"  R1: {rv['R1']} uL  R2: {rv['R2']} uL\n"
         f"For motion test: water in source plate A2."
     )
@@ -161,7 +164,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     protocol.pause(
         "Seal plate. Flick to mix. Spin briefly. Keep on ice.\n"
-        "THERMAL CYCLER — DNA Amplification (lid 70C):\n"
+        "THERMAL CYCLER – DNA Amplification (lid 70C):\n"
         "  30C 2.5h -> 65C 3min -> 4C hold\n"
         "Return plate when complete."
     )
@@ -173,7 +176,7 @@ def run(protocol: protocol_api.ProtocolContext):
     )
 
     # ══════════════════════════════════════════════════════════════════
-    # SECTION 2 — LIBRARY PREP
+    # SECTION 2 – LIBRARY PREP
     # ══════════════════════════════════════════════════════════════════
 
     dp = dna_prep_vols(NUM_SAMPLES)
@@ -189,7 +192,7 @@ def run(protocol: protocol_api.ProtocolContext):
         p8_1000.drop_tip()
 
     protocol.pause(
-        "THERMAL CYCLER — DNAPREP (lid 105C):\n"
+        "THERMAL CYCLER – DNAPREP (lid 105C):\n"
         "  37C 10min -> 4C hold\n"
         "Return plate on ice."
     )
@@ -208,7 +211,7 @@ def run(protocol: protocol_api.ProtocolContext):
         p8_1000.drop_tip()
 
     protocol.pause(
-        "THERMAL CYCLER — FERAT (lid 105C):\n"
+        "THERMAL CYCLER – FERAT (lid 105C):\n"
         "  4C 30s -> 30C 5min -> 65C 30min -> 4C hold\n"
         "Return plate on ice."
     )
@@ -243,13 +246,13 @@ def run(protocol: protocol_api.ProtocolContext):
         p8_1000.drop_tip()
 
     protocol.pause(
-        "THERMAL CYCLER — LIB-AMP (lid 105C):\n"
+        "THERMAL CYCLER – LIB-AMP (lid 105C):\n"
         "  98C 45s -> [98C 15s / 60C 30s / 72C 45s]x8 -> 72C 60s -> 4C hold\n"
         "Return plate on ice."
     )
 
     # ══════════════════════════════════════════════════════════════════
-    # SECTION 3 — BEAD CLEANUP
+    # SECTION 3 – BEAD CLEANUP
     # ══════════════════════════════════════════════════════════════════
 
     protocol.pause("Vortex Resolve Beads 10s. Fresh 80% EtOH in reservoir A2.")
@@ -274,17 +277,17 @@ def run(protocol: protocol_api.ProtocolContext):
     for wash in range(2):
         for col in cols:
             p8_1000.pick_up_tip()
-            p8_1000.aspirate(200, etoh.bottom(z=5))
-            p8_1000.dispense(200, col[0].bottom(z=5))
+            p8_1000.aspirate(ETOH_VOL, etoh.bottom(z=5))
+            p8_1000.dispense(ETOH_VOL, col[0].bottom(z=5))
             p8_1000.drop_tip()
         protocol.delay(seconds=30, msg=f"EtOH wash {wash+1}/2")
         for col in cols:
             p8_1000.pick_up_tip()
-            p8_1000.aspirate(200, col[0].bottom(z=5))
-            p8_1000.dispense(200, waste.bottom(z=5))
+            p8_1000.aspirate(ETOH_VOL, col[0].bottom(z=5))
+            p8_1000.dispense(ETOH_VOL, waste.bottom(z=5))
             p8_1000.drop_tip()
 
-    protocol.pause("Remove residual EtOH with P20. Air dry 3 min — do NOT over-dry.")
+    protocol.pause("Remove residual EtOH with P20. Air dry 3 min – do NOT over-dry.")
     protocol.pause("Remove plate from magnet.")
 
     for col in cols:
@@ -302,7 +305,7 @@ def run(protocol: protocol_api.ProtocolContext):
         p8_1000.dispense(40, out_cols[i][0].bottom(z=5))
         p8_1000.drop_tip()
 
-    protocol.comment("DONE — libraries in output plate (C3).")
+    protocol.comment("DONE – libraries in output plate (C3).")
     protocol.pause(
         "POST-QC: Qubit HS dsDNA + Tapestation HS D1000.\n"
         "Pool + final 0.75x bead cleanup before sequencing."
