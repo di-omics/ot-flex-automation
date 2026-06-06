@@ -21,6 +21,11 @@ column 1 of the sample plate, drop tips. No reagents, no pauses. Simulates clean
 | B3 | NEST 12-well reservoir - **water in A1** (use dyed water to see it) |
 | D1 | trash |
 
+**Pipette mount:** rendered for the **LEFT mount** - Studio45's `p1000_multi_flex`
+is physically on the left (confirmed via the robot API; it's calibrated there).
+The hand-written `protocols/*.py` still load `mount="right"` and will fail on this
+robot until reconciled. Re-render for a different mount with `--mount right`.
+
 **Run:** import in the App -> Labware Position Check -> Run. Success = it completes
 and water visibly lands in the 8 wells of column 1.
 
