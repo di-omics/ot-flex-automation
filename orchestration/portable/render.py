@@ -14,13 +14,14 @@ import argparse
 import json
 import sys
 
-from .examples import whole_genome_seq_wga, hello_water, whole_genome_seq_full
+from .examples import whole_genome_seq_wga, hello_water, whole_genome_seq_full, wga_water_test
 from .backends import opentrons_backend, worklist_backend, liquid_handler_backend
 
 EXAMPLES = {
     "wga": whole_genome_seq_wga.build_spec,
     "hello": hello_water.build_spec,
     "whole_genome_seq": whole_genome_seq_full.build_spec,
+    "wga_test": wga_water_test.build_spec,
 }
 
 
