@@ -178,7 +178,7 @@ real machine, state-aware* — not elegance, and not (yet) accuracy.
 - **Scale-down floor:** how low before dropout/quality breaks?
 - **Closed-loop objective:** cost at fixed quality, or a quality/cost ratio?
 
-## 11. Proposed Claude skill (separate artifact)
+## 11. Proposed single-cell-WGS skill (separate artifact)
 A `single-cell-wgs` skill: deep-dive reference for **executing scWGS from very
 sparse samples** (ResolveDNA/PTA handling, dropout mitigation, low-input QC) and
 **analyzing** it (CNV, SNV, SV, aneuploidy) with an eye to compute efficiency.
