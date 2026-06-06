@@ -16,8 +16,9 @@ the 1-3% CV target is hit. The spec is the asset that survives the move.
    examples/*.py ─▶ │   ProtocolSpec (spec.py) │ ─┐  the portable asset
                     │   volumes · src->dst · QC │  │  (also JSON: --target spec)
                     └─────────────────────────┘  │
-                                                  ├─▶ opentrons_backend  -> Flex .py (runs today)
-                                                  ├─▶ worklist_backend   -> CSV (STAR/Bravo import, today)
+                                                  ├─▶ opentrons_backend  -> Flex .py (runs on Studio45)
+                                                  ├─▶ pylabrobot_backend -> Hamilton STAR .py (PyLabRobot)
+                                                  ├─▶ worklist_backend   -> CSV (STAR/Bravo import)
                                                   └─▶ hamilton_backend   -> native Venus method (Phase 3)
 ```
 
