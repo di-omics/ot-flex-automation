@@ -20,10 +20,10 @@ from .backends import opentrons_backend, worklist_backend, hamilton_backend
 EXAMPLES = {"wga": resolvedna_wga.build_spec, "hello": hello_water.build_spec}
 
 
-def render(target: str, num_samples: int, example: str = "wga") -> str:
+def render(target: str, num_samples: int, example: str = "wga", mount: str = "right") -> str:
     spec = EXAMPLES[example](num_samples=num_samples)
     if target == "opentrons":
-        return opentrons_backend.render(spec)
+        return opentrons_backend.render(spec, mount=mount)
     if target == "worklist":
         return worklist_backend.render(spec)
     if target == "hamilton":
@@ -39,11 +39,13 @@ def main(argv=None):
                    choices=["opentrons", "worklist", "hamilton", "spec"])
     p.add_argument("--example", default="wga", choices=list(EXAMPLES),
                    help="which portable spec to render (default: wga)")
+    p.add_argument("--mount", default="right", choices=["left", "right"],
+                   help="Opentrons pipette mount (Studio45's p1000 is on the LEFT)")
     p.add_argument("--num-samples", type=int, default=8)
     p.add_argument("--out", help="write to file instead of stdout")
     a = p.parse_args(argv)
 
-    text = render(a.target, a.num_samples, a.example)
+    text = render(a.target, a.num_samples, a.example, a.mount)
     if a.out:
         with open(a.out, "w") as f:
             f.write(text)
