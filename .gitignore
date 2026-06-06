@@ -1,3 +1,6 @@
+# Rendered/generated liquid-handler artifacts (derive from portable specs)
+generated/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
