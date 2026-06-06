@@ -92,7 +92,18 @@ class Delay:
     message: str = ""
 
 
-Step = object  # Transfer | Handoff | Delay (backends isinstance-dispatch)
+@dataclass
+class MoveLabware:
+    """Relocate a plate to another deck slot - by the Flex Gripper
+    (use_gripper=True) or a manual operator move. Models "take the plate to the
+    reader / onto the magnet / off the magnet." Destination slot must be empty."""
+    labware: str          # labware id to move
+    to_slot: str          # destination deck slot, e.g. "D1"
+    use_gripper: bool = True
+    comment: str = ""
+
+
+Step = object  # Transfer | Handoff | Delay | MoveLabware (backends isinstance-dispatch)
 
 
 # ── Protocol ──────────────────────────────────────────────────────────
@@ -126,7 +137,8 @@ class ProtocolSpec:
         steps = []
         for s in d.get("steps", []):
             t = s.pop("_type")
-            steps.append({"Transfer": Transfer, "Handoff": Handoff, "Delay": Delay}[t](**s))
+            steps.append({"Transfer": Transfer, "Handoff": Handoff, "Delay": Delay,
+                          "MoveLabware": MoveLabware}[t](**s))
         return cls(
             name=d["name"],
             num_samples=d["num_samples"],

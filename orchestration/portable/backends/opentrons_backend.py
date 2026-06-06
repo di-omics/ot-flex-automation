@@ -11,7 +11,7 @@ imports into the Opentrons App and runs / simulates with `opentrons_simulate`.
 """
 from __future__ import annotations
 
-from ..spec import ProtocolSpec, Transfer, Handoff, Delay, split_loc
+from ..spec import ProtocolSpec, Transfer, Handoff, Delay, MoveLabware, split_loc
 
 # vendor-neutral kind -> Opentrons catalog load name
 _LOADNAME = {
@@ -71,6 +71,11 @@ def render(spec: ProtocolSpec, mount: str = "right", return_tips: bool = False) 
             w("")
         elif isinstance(step, Delay):
             w(f"    protocol.delay(seconds={step.seconds}, msg={step.message!r})")
+            w("")
+        elif isinstance(step, MoveLabware):
+            if step.comment:
+                w(f"    # {step.comment}")
+            w(f"    protocol.move_labware({step.labware}, {step.to_slot!r}, use_gripper={step.use_gripper})")
             w("")
         elif isinstance(step, Transfer):
             _emit_transfer(w, step, drop)
