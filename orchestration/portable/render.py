@@ -14,13 +14,14 @@ import argparse
 import json
 import sys
 
-from .examples import resolvedna_wga, hello_water, resolvedna_full
+from .examples import resolvedna_wga, hello_water, resolvedna_full, wga_water_test
 from .backends import opentrons_backend, worklist_backend, hamilton_backend
 
 EXAMPLES = {
     "wga": resolvedna_wga.build_spec,
     "hello": hello_water.build_spec,
     "resolvedna": resolvedna_full.build_spec,
+    "wga_test": wga_water_test.build_spec,
 }
 
 
