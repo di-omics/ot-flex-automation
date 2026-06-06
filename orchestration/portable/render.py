@@ -16,7 +16,8 @@ import sys
 
 from .examples import (resolvedna_wga, hello_water, resolvedna_full,
                        wga_water_test, wga_move_to_reader)
-from .backends import opentrons_backend, worklist_backend, hamilton_backend
+from .backends import (opentrons_backend, worklist_backend, hamilton_backend,
+                       pylabrobot_backend)
 
 EXAMPLES = {
     "wga": resolvedna_wga.build_spec,
@@ -36,6 +37,8 @@ def render(target: str, num_samples: int, example: str = "wga",
         return worklist_backend.render(spec)
     if target == "hamilton":
         return hamilton_backend.render_worklist(spec)  # interim worklist path
+    if target == "pylabrobot":
+        return pylabrobot_backend.render(spec)         # Hamilton STAR via PyLabRobot
     if target == "spec":
         return json.dumps(spec.to_dict(), indent=2)
     raise SystemExit(f"unknown target {target!r}")
@@ -44,7 +47,7 @@ def render(target: str, num_samples: int, example: str = "wga",
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--target", required=True,
-                   choices=["opentrons", "worklist", "hamilton", "spec"])
+                   choices=["opentrons", "worklist", "hamilton", "pylabrobot", "spec"])
     p.add_argument("--example", default="wga", choices=list(EXAMPLES),
                    help="which portable spec to render (default: wga)")
     p.add_argument("--mount", default="right", choices=["left", "right"],
