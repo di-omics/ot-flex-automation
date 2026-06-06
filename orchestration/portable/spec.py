@@ -25,6 +25,7 @@ LABWARE_KINDS = {
     "pcr_plate_96",   # 96-well PCR plate
     "reservoir_12",   # 12-well reagent reservoir / trough
     "tiprack_200",    # 200 uL filter tips
+    "tiprack_1000",   # 1000 uL tips (Studio45's loaded tips)
     "magnet",         # magnetic block/module
     "trash",          # waste / trash bin
 }
@@ -52,18 +53,23 @@ class Liquid:
 # ── Steps ─────────────────────────────────────────────────────────────
 @dataclass
 class Transfer:
-    """Move `volume_ul` from one source well to a destination plate.
+    """Move `volume_ul` between a source and a destination, 8-channel column-wise.
 
-    mode="per_column" models an 8-channel distribute: aspirate from a single
-    reservoir well, dispense into each column of the destination plate. This is
-    the dominant motif in the kit protocols (distribute a master mix to all
-    sample columns). Backends expand it to their own primitive (Opentrons
-    column loop; a worklist row per destination well for STAR/Bravo).
+    Source and dest are each either a single well ("<labware>:<well>", e.g. a
+    reservoir trough or a waste well) or a whole plate ("<labware>"). The mode is
+    inferred from which is which — this covers every motif in the kit protocols:
+
+      well  -> plate : distribute a master mix to each sample column (reagent add)
+      plate -> well  : pool each column into one well (remove supernatant / EtOH)
+      plate -> plate : column i -> column i (transfer eluate to the output plate)
+      well  -> well  : a single trough-to-trough move
+
+    Backends expand it to their own primitive (Opentrons column loop; worklist
+    rows for STAR/Bravo).
     """
-    source: str                       # "<labware_id>:<well>"
-    dest: str                         # "<labware_id>" (all active columns)
+    source: str                       # "<labware>" or "<labware>:<well>"
+    dest: str                         # "<labware>" or "<labware>:<well>"
     volume_ul: float
-    mode: str = "per_column"
     new_tip: str = "each"             # "each" | "once" | "none"
     aspirate_z: float = 5.0           # mm above well bottom
     dispense_z: float = 5.0
@@ -78,7 +84,15 @@ class Handoff:
     message: str
 
 
-Step = object  # Transfer | Handoff (kept loose; backends isinstance-dispatch)
+@dataclass
+class Delay:
+    """An on-deck timed wait (e.g. an EtOH soak). Unlike a Handoff it needs no
+    operator — the robot just waits. Compiles to protocol.delay()."""
+    seconds: int
+    message: str = ""
+
+
+Step = object  # Transfer | Handoff | Delay (backends isinstance-dispatch)
 
 
 # ── Protocol ──────────────────────────────────────────────────────────
@@ -112,7 +126,7 @@ class ProtocolSpec:
         steps = []
         for s in d.get("steps", []):
             t = s.pop("_type")
-            steps.append({"Transfer": Transfer, "Handoff": Handoff}[t](**s))
+            steps.append({"Transfer": Transfer, "Handoff": Handoff, "Delay": Delay}[t](**s))
         return cls(
             name=d["name"],
             num_samples=d["num_samples"],
