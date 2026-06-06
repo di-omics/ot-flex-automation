@@ -13,7 +13,7 @@ from __future__ import annotations
 import csv
 import io
 
-from ..spec import ProtocolSpec, Transfer, Handoff, Delay, split_loc
+from ..spec import ProtocolSpec, Transfer, Handoff, Delay, MoveLabware, split_loc
 
 _ROWS = "ABCDEFGH"
 HEADER = ["step", "source_labware", "source_well",
@@ -31,6 +31,9 @@ def render(spec: ProtocolSpec) -> str:
             out.writerow([n, "", "", "", "", "", f"HANDOFF: {first}"])
         elif isinstance(step, Delay):
             out.writerow([n, "", "", "", "", "", f"DELAY {step.seconds}s: {step.message}"])
+        elif isinstance(step, MoveLabware):
+            how = "gripper" if step.use_gripper else "manual"
+            out.writerow([n, "", "", step.labware, step.to_slot, "", f"MOVE PLATE ({how})"])
         elif isinstance(step, Transfer):
             for row in _expand(spec, step):
                 out.writerow([n] + row)
