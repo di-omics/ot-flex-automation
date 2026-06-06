@@ -20,8 +20,8 @@ def run(protocol: protocol_api.ProtocolContext):
     tips_b = protocol.load_labware('opentrons_flex_96_filtertiprack_200ul', 'A2')
     trash = protocol.load_trash_bin('D1')
 
-    # 8-channel 1000 uL on the right mount, running 200 uL filter tips
-    pipette = protocol.load_instrument("flex_8channel_1000", mount="right", tip_racks=[tips_a, tips_b])
+    # 8-channel 1000 uL on the left mount, running 200 uL filter tips
+    pipette = protocol.load_instrument("flex_8channel_1000", mount="left", tip_racks=[tips_a, tips_b])
 
     # Move 20 uL water to each column
     _cols = [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]

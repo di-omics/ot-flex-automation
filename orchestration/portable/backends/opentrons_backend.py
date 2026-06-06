@@ -18,7 +18,9 @@ _LOADNAME = {
 }
 
 
-def render(spec: ProtocolSpec) -> str:
+def render(spec: ProtocolSpec, mount: str = "right") -> str:
+    if mount not in ("left", "right"):
+        raise ValueError(f"mount must be 'left' or 'right', got {mount!r}")
     L: list[str] = []
     w = L.append
 
@@ -54,8 +56,8 @@ def render(spec: ProtocolSpec) -> str:
 
     racks = ", ".join(tipracks)
     w("")
-    w("    # 8-channel 1000 uL on the right mount, running 200 uL filter tips")
-    w(f'    pipette = protocol.load_instrument("flex_8channel_1000", mount="right", tip_racks=[{racks}])')
+    w(f"    # 8-channel 1000 uL on the {mount} mount, running 200 uL filter tips")
+    w(f'    pipette = protocol.load_instrument("flex_8channel_1000", mount="{mount}", tip_racks=[{racks}])')
     w("")
 
     for step in spec.steps:
