@@ -16,7 +16,8 @@ import sys
 
 from .examples import (whole_genome_seq_wga, hello_water, whole_genome_seq_full,
                        wga_water_test, wga_move_to_reader)
-from .backends import opentrons_backend, worklist_backend, liquid_handler_backend
+from .backends import (opentrons_backend, worklist_backend, liquid_handler_backend,
+                       pylabrobot_backend)
 
 EXAMPLES = {
     "wga": whole_genome_seq_wga.build_spec,
@@ -36,6 +37,8 @@ def render(target: str, num_samples: int, example: str = "wga",
         return worklist_backend.render(spec)
     if target == "liquid_handler":
         return liquid_handler_backend.render_worklist(spec)  # interim worklist path
+    if target == "pylabrobot":
+        return pylabrobot_backend.render(spec)         # liquid handler via PyLabRobot
     if target == "spec":
         return json.dumps(spec.to_dict(), indent=2)
     raise SystemExit(f"unknown target {target!r}")
@@ -44,7 +47,7 @@ def render(target: str, num_samples: int, example: str = "wga",
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--target", required=True,
-                   choices=["opentrons", "worklist", "liquid_handler", "spec"])
+                   choices=["opentrons", "worklist", "liquid_handler", "pylabrobot", "spec"])
     p.add_argument("--example", default="wga", choices=list(EXAMPLES),
                    help="which portable spec to render (default: wga)")
     p.add_argument("--mount", default="right", choices=["left", "right"],
