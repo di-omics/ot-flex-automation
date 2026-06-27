@@ -106,3 +106,27 @@ README.md
 - NEBNext Enzymatic Methyl-seq v2 - Instruction Manual, NEB #E8015 (New England Biolabs)
 - TIP-seq - Bartlett et al. (2021) J Cell Biol; Kaya-Okur et al. (2019) Nat Commun
 - Opentrons Flex + Python Protocol API - https://docs.opentrons.com
+
+## Studio45 WGS lower-source variants
+
+These Studio45 whole-genome sequencing files use the same Studio45 deck setup:
+
+```text
+A1  secondary 1000 uL tips
+A2  primary 1000 uL tips
+A3  trash
+B2  sample/start plate
+B3  reagent reservoir
+C2  Opentrons Magnetic Block GEN1
+C3  output plate
+D2  bead/wash reservoir
+```
+
+Both use the Flex 8-channel 1000 uL pipette on the LEFT mount and lower B3/D2 source aspiration to `bottom(z=2.0)`.
+
+| File | Use |
+|---|---|
+| `protocols/resolve_dna_wgs_full_studio45_8ch_returntip_lower_source_demo.py` | Dry-run / water-demo version. Reuses one full 8-tip column and returns it at the end. |
+| `protocols/resolve_dna_wgs_full_studio45_flex_v2_lower_source.py` | Fresh-tip liquid/wet-run version. Uses fresh tips and drops them. |
+
+The return-tip version is for dry/water demo only. Use fresh-tip handling for real chemistry.
