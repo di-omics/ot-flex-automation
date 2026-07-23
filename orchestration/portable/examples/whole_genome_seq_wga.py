@@ -1,6 +1,6 @@
 """Example: the whole-genome amplification section, as a portable ProtocolSpec.
 
-Transcribed from `protocols/resolvedna_wgs_flex.py` Section 1 (WGA): distribute
+Transcribed from `protocols/whole_genome_seq_flex.py` Section 1 (WGA): distribute
 Lysis Mix, then Reaction Mix, to every sample column, with the incubation /
 thermal-cycler handoffs in between. This is the vendor-neutral source of truth -
 render it to the Flex today, to a STAR/Bravo worklist for the port.

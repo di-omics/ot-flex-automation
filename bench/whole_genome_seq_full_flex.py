@@ -103,9 +103,9 @@ def run(protocol: protocol_api.ProtocolContext):
 
     protocol.pause('THERMAL CYCLER LIB-AMP (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.')
 
-    protocol.pause('Vortex Resolve Beads 10s. Fresh 80% EtOH in bead reservoir A2.')
+    protocol.pause('Vortex SPRI beads 10s. Fresh 80% EtOH in bead reservoir A2.')
 
-    # Add Resolve Beads
+    # Add SPRI beads
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(30.0, bead_res["A1"].bottom(z=5.0))

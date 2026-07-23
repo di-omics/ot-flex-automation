@@ -20,7 +20,7 @@ Rules transcribed from the protocols (keep in sync with the pause text):
     >= 50% of pre-SPRI -> ship to TapeStation HS D1000 + sequencing
     <  50%             -> SPRI loss; re-amp eluate to 15 total cycles
 
-  WGS, post-WGA QC checkpoint (resolvedna_wgs_flex.py):
+  WGS, post-WGA QC checkpoint (whole_genome_seq_flex.py):
     Qubit HS dsDNA expect > 800 ng avg; TapeStation D5000 ~1275 bp
     -> normalize to 2 ng/uL plate, proceed (flag if well below expected yield)
 """
