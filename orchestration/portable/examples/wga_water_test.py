@@ -1,6 +1,6 @@
 """WGA reagent distributes - live water test (Studio45).
 
-Section 1 of whole-genome sequencing, the choreography only: distribute "lysis" from
+Section 1 of whole-genome sequencing preparation, the choreography only: distribute "lysis" from
 reservoir A1 and "reaction" from reservoir A2 to the sample plate. Two reagents
 from two different wells - the multi-well sourcing - with water, no pauses, so
 it runs continuously as a motion test.

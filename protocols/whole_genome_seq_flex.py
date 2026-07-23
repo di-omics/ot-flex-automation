@@ -3,8 +3,8 @@ from opentrons import protocol_api
 # ──────────────────────────────────────────────────────────────────────
 # whole-genome sequencing - Full End-to-End (Opentrons Flex)
 #
-# Automates the vendor whole-genome Single-Cell Core Kit
-# (the kit user guide): WGA -> Library Prep -> Bead Cleanup, producing
+# Automates the whole-genome sequencing preparation workflow
+# (authorized WGS/WGA workflow source): WGA -> Library Prep -> Bead Cleanup, producing
 # sequencing-ready Illumina libraries from single cells / nuclei.
 #
 # Status: run end-to-end on the Flex. All liquid handling uses the
@@ -17,7 +17,7 @@ from opentrons import protocol_api
 #   A1 = Lysis Mix     A2 = Reaction Mix   A3 = DNA Prep Mix
 #   A4 = FERAT Mix     A5 = LP2L           A6 = Adapters       A7 = Amp Mix
 # Bead / wash reservoir - 12-well in D2:
-#   A1 = Resolve Beads A2 = 80% EtOH       A3 = Elution Buffer  A12 = waste
+#   A1 = SPRI beads A2 = 80% EtOH       A3 = Elution Buffer  A12 = waste
 #
 # Dry motion/volume check: load water in the source + bead wells and run
 # as-is. Real run: prepare the master mixes off-deck per the kit guide.
@@ -31,7 +31,8 @@ metadata = {
     "description": (
         "WGA + Library Prep + bead cleanup on Opentrons Flex. "
         "Thermal cycling and plate moves are manual handoffs (pauses). "
-        "the vendor whole-genome sequencing kit. 200 uL filter tips."
+        "Authorized whole-genome sequencing preparation workflow (RUO). "
+        "Uses 200 uL filter tips."
     ),
 }
 
@@ -255,7 +256,7 @@ def run(protocol: protocol_api.ProtocolContext):
     # SECTION 3 - BEAD CLEANUP
     # ══════════════════════════════════════════════════════════════════
 
-    protocol.pause("Vortex Resolve Beads 10s. Fresh 80% EtOH in reservoir A2.")
+    protocol.pause("Vortex SPRI beads 10s. Fresh 80% EtOH in reservoir A2.")
 
     for col in cols:
         p8_1000.pick_up_tip()

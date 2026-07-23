@@ -260,10 +260,10 @@ def run(protocol: protocol_api.ProtocolContext):
     # ------------------------------------------------------------------
     protocol.pause(
         "BEAD CLEANUP\n"
-        f"Vortex Resolve Beads/water in D2:A1. Fresh 80% EtOH/water in D2:A2. Elution in D2:A3.\n"
+        f"Vortex SPRI beads/water in D2:A1. Fresh 80% EtOH/water in D2:A2. Elution in D2:A3.\n"
         f"This file is using ETOH_VOL={ETOH_VOL} uL. MOTION_TEST_SAFE_VOLUMES={MOTION_TEST_SAFE_VOLUMES}. Resume to add beads."
     )
-    add_to_sample(beads, 30.0, "Add Resolve Beads from D2:A1.")
+    add_to_sample(beads, 30.0, "Add SPRI beads from D2:A1.")
 
     protocol.pause("Seal. Vortex high 10s. Incubate RT 5 min. Spin briefly. Resume to move plate to magnetic block C2.")
     move_sample_to_magnet()
