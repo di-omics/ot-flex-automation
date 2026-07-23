@@ -1,5 +1,5 @@
 """AUTO-GENERATED from a portable ProtocolSpec - Hamilton STAR via PyLabRobot.
-Same protocol as the Flex build, retargeted to the STAR. Source: whole-genome sequencing - Full (portable, Studio45).
+Same protocol as the Flex build, retargeted to the STAR. Source: Whole-genome sequencing - Full (portable, Studio45).
 Dry run: USE_CHATTERBOX=True (default). Real STAR: set it False.
 EDIT the DECK SETUP block (rails/carriers/labware) for your physical STAR."""
 import asyncio
@@ -107,8 +107,8 @@ async def main():
             await lh.dispense(sample_plate[f"A{c}:H{c}"], vols=[20] * 8)
         await lh.return_tips()
     input('THERMAL CYCLER LIB-AMP (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'THERMAL CYCLER LIB-AMP (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.')
-    input('Vortex Resolve Beads 10s. Fresh 80% EtOH in bead reservoir A2.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'Vortex Resolve Beads 10s. Fresh 80% EtOH in bead reservoir A2.')
-    # Add Resolve Beads
+    input('Vortex SPRI magnetic cleanup beads 10s. Fresh 80% EtOH in bead reservoir A2.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'Vortex SPRI magnetic cleanup beads 10s. Fresh 80% EtOH in bead reservoir A2.')
+    # Add SPRI magnetic cleanup beads
     for c in range(1, NUM_COLUMNS + 1):
         await _grab_tips()
         await lh.aspirate(bead_res["A1"] * 8, vols=[30.0] * 8)

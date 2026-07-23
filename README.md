@@ -6,7 +6,7 @@ Opentrons Flex automation for genomics library prep. Each protocol turns a singl
 
 Three Flex protocols, three questions on the road from genome to intervention:
 
-1. **WGS** (whole-genome sequencing) - **gene-editing safety.** Single-cell whole-genome sequencing to catch off-target edits and confirm an edit or gene therapy is clean.
+1. **WGS** (whole-genome sequencing preparation) - **gene-editing safety.** Single-cell whole-genome sequencing to catch off-target edits and confirm an edit or gene therapy is clean.
 2. **Epigenetic clock** (EM-seq) - **a longevity readout.** Genome-wide methylation as a quantitative measure of biological age - the gauge for whether a longevity intervention actually moves the needle.
 3. **TIP-seq** - **disease risk to target.** Low-input epigenomic profiling that follows non-coding GWAS risk variants to the regulatory elements they act through, turning a statistical hit into a druggable target.
 
@@ -22,7 +22,7 @@ Sequencing-ready libraries for **clinical disease-risk profiling**, **gene-thera
 
 | File | Method / Kit | Output | Status |
 |------|--------------|--------|--------|
-| `protocols/resolvedna_wgs_flex.py` | the vendor whole-genome sequencing (the kit user guide) | Single-cell whole-genome libraries | **Run end-to-end** on the Flex |
+| `protocols/whole_genome_seq_flex.py` | Whole-genome sequencing preparation (authorized WGS/WGA workflow, RUO) | Single-cell whole-genome libraries | **Run end-to-end** on the Flex |
 | `protocols/emseq_epigenetic_clock_flex.py` | NEBNext EM-seq v2 (NEB #E8015) | Genome-wide methylation libraries (aging-clock input) | **Draft** - motion-test ready, not yet bench-validated |
 | `protocols/tipseq_epigenome_flex.py` | TIP-seq (Tn5 + IVT, low-input CUT&Tag) | Histone-mark / TF epigenomic libraries | **Draft** - adaptation, not yet bench-validated |
 
@@ -30,13 +30,13 @@ All three share the same conventions: a `CONFIG` block up top, off-deck steps dr
 
 ---
 
-## whole-genome sequencing
+## Whole-genome sequencing
 
-whole-genome amplification-based whole-genome amplification -> library prep -> bead cleanup, from single cells / nuclei. The Flex handles stages 2-3 of the 5-stage pipeline (isolation -> **WGA -> library prep** -> sequencing -> analysis); everything else is off-instrument.
+Whole-genome amplification (WGA) -> library prep -> bead cleanup, from single cells / nuclei. The Flex handles stages 2-3 of the 5-stage pipeline (isolation -> **WGA -> library prep** -> sequencing -> analysis); everything else is off-instrument.
 
 **Section 1 - WGA:** Lysis Mix (L1/L2/L3) -> RT incubation -> Reaction Mix (R1/R2) -> cycler 30 °C 2.5 h -> 65 °C 3 min
 **Section 2 - Library Prep:** DNAPREP (LP0B/LP0E) -> FERAT (LP1B/LP1E) -> ligation (adapters + LP2L) -> LIB-AMP (LP3A/LP3P)
-**Section 3 - Bead Cleanup:** Resolve Beads 0.75× -> 2× 80 % EtOH -> elute -> transfer
+**Section 3 - Bead Cleanup:** SPRI magnetic cleanup beads 0.75× -> 2× 80 % EtOH -> elute -> transfer
 
 Deck: sample plate **B2**, source reservoir **B3**, mag block **C2**, output plate **C3**, bead/wash reservoir **D2**, tips **A2/A3**, trash **D1**.
 Source reservoir (B3): A1 Lysis · A2 Reaction · A3 DNA Prep · A4 FERAT · A5 LP2L · A6 Adapters · A7 Amp Mix.
@@ -83,7 +83,7 @@ Import the file into the Opentrons App and complete Labware Position Check befor
 
 ```
 protocols/
-  resolvedna_wgs_flex.py          WGS - run end-to-end on the Flex.
+  whole_genome_seq_flex.py        WGS - run end-to-end on the Flex.
   emseq_epigenetic_clock_flex.py  EM-seq methylation - draft, motion-test ready.
   tipseq_epigenome_flex.py        TIP-seq epigenomic - draft (200 uL filter tips).
 README.md
@@ -92,7 +92,7 @@ README.md
 ## Roadmap
 
 - [x] Repo + collaborator setup
-- [x] whole-genome sequencing - full end-to-end protocol
+- [x] Whole-genome sequencing - full end-to-end protocol
 - [x] EM-seq epigenetic-clock protocol (draft)
 - [x] TIP-seq epigenomic protocol (draft)
 - [ ] Bench-validate the EM-seq and TIP-seq protocols
@@ -102,7 +102,7 @@ README.md
 
 ## References
 
-- whole-genome Single-Cell Core Kit - User Guide the kit user guide (the vendor)
+- Authorized WGS/WGA workflow documentation (RUO)
 - NEBNext Enzymatic Methyl-seq v2 - Instruction Manual, NEB #E8015 (New England Biolabs)
 - TIP-seq - Bartlett et al. (2021) J Cell Biol; Kaya-Okur et al. (2019) Nat Commun
 - Opentrons Flex + Python Protocol API - https://docs.opentrons.com

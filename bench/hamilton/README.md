@@ -7,19 +7,19 @@ The **same** portable specs that drive the Opentrons Flex, retargeted to the
 (prototype on the Flex -> run on the STAR for the 1-3% CV target).
 
 ## Files
-- `resolvedna_star_plr.py` - the full whole-genome sequencing protocol on the STAR.
+- `whole_genome_seq_star_plr.py` - the full WGS preparation protocol on the STAR.
 - `wga_move_star_plr.py` - WGA distributes + an iSWAP/gripper plate move.
 
 Regenerate any spec for the STAR:
 ```bash
 pip install pylabrobot
-python -m orchestration.portable.render --target pylabrobot --example resolvedna --out bench/hamilton/resolvedna_star_plr.py
+python -m orchestration.portable.render --target pylabrobot --example whole_genome_seq --out bench/hamilton/whole_genome_seq_star_plr.py
 ```
 
 ## Run it
 ```bash
 # Dry run - no hardware. Prints every command (PyLabRobot chatterbox backend):
-python bench/hamilton/resolvedna_star_plr.py        # USE_CHATTERBOX = True (default)
+python bench/hamilton/whole_genome_seq_star_plr.py  # USE_CHATTERBOX = True (default)
 ```
 Set `USE_CHATTERBOX = False` in the file to drive a real STAR (`STARBackend`).
 Both generated scripts run start-to-finish under the chatterbox backend.

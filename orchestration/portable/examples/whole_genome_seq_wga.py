@@ -1,6 +1,6 @@
 """Example: the whole-genome amplification section, as a portable ProtocolSpec.
 
-Transcribed from `protocols/resolvedna_wgs_flex.py` Section 1 (WGA): distribute
+Transcribed from `protocols/whole_genome_seq_flex.py` Section 1 (WGA): distribute
 Lysis Mix, then Reaction Mix, to every sample column, with the incubation /
 thermal-cycler handoffs in between. This is the vendor-neutral source of truth -
 render it to the Flex today, to a STAR/Bravo worklist for the port.
@@ -10,7 +10,7 @@ from ..spec import ProtocolSpec, Labware, Liquid, Transfer, Handoff
 
 def build_spec(num_samples: int = 8) -> ProtocolSpec:
     return ProtocolSpec(
-        name="whole-genome amplification (portable)",
+        name="Whole-genome amplification (portable)",
         description="WGA reagent distribution + off-deck handoffs, platform-neutral.",
         num_samples=num_samples,
         labware=[
