@@ -54,14 +54,14 @@ python -m orchestration.portable.render --target spec
 - `backends/liquid_handler_backend.py` - native Venus = **stub** (Phase 3); interim
   worklist path works today.
 - `examples/whole_genome_seq_wga.py` - the WGA section, transcribed from
-  `protocols/whole_genome_seq_wgs_flex.py`. Extend to the full protocol next.
+  `protocols/whole_genome_seq_flex.py`. Extend to the full protocol next.
 
 ## Extending
 
 - **More steps:** add to an example's `steps=[...]`. `Transfer` (per-column
   distribute) and `Handoff` (operator pause) cover the WGA motif; add step types
   (plate->plate, SPRI cleanup) as the encoded protocol grows.
-- **Full whole-genome sequencing:** transcribe Sections 2-3 (library prep, bead cleanup) into
+- **Full WGS preparation:** transcribe Sections 2-3 (library prep, bead cleanup) into
   the spec, then the *same* spec drives Flex now and STAR/Bravo at port time.
 - **Native liquid handler:** fill in `liquid_handler_backend.render()` with a Venus method
   template - labware->deck mapping, tip types, and liquid classes (the knobs that
