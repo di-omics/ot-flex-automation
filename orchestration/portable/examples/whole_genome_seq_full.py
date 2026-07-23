@@ -1,6 +1,6 @@
-"""The ENTIRE whole-genome sequencing protocol as a portable ProtocolSpec.
+"""The complete whole-genome sequencing preparation as a portable ProtocolSpec.
 
-Transcribed faithfully from `protocols/resolvedna_wgs_flex.py` - WGA -> Library
+Transcribed faithfully from `protocols/whole_genome_seq_flex.py` - WGA -> Library
 Prep -> Bead Cleanup - but vendor-neutral and configured for Studio45 (left
 mount, trash at A3). Each reagent comes from its own reservoir well.
 
@@ -29,7 +29,7 @@ ETOH_VOL = 180.0  # see realism note above
 def build_spec(num_samples: int = 8) -> ProtocolSpec:
     SRC, BEAD, S, OUT = "reagent_res", "bead_res", "sample_plate", "output_plate"
     return ProtocolSpec(
-        name="whole-genome sequencing - Full (portable, Studio45)",
+        name="Whole-genome sequencing - Full (portable, Studio45)",
         description="Full WGA + Library Prep + Bead Cleanup. Reagents per reservoir well.",
         num_samples=num_samples,
         labware=[
@@ -77,8 +77,8 @@ def build_spec(num_samples: int = 8) -> ProtocolSpec:
             Handoff("THERMAL CYCLER LIB-AMP (lid 105C): 98C 45s -> "
                     "[98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice."),
             # ── Section 3: Bead Cleanup ──
-            Handoff("Vortex Resolve Beads 10s. Fresh 80% EtOH in bead reservoir A2."),
-            Transfer(f"{BEAD}:A1", S, 30.0, comment="Add Resolve Beads"),
+            Handoff("Vortex SPRI magnetic cleanup beads 10s. Fresh 80% EtOH in bead reservoir A2."),
+            Transfer(f"{BEAD}:A1", S, 30.0, comment="Add SPRI magnetic cleanup beads"),
             Handoff("Seal. Vortex 10s. Incubate RT 5 min. Spin. "
                     "Place plate ON Magnetic Block (C2). Wait 3 min until clear."),
             Transfer(S, f"{BEAD}:A12", 70.0, comment="Remove supernatant to waste"),

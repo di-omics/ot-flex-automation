@@ -1,10 +1,10 @@
 """AUTO-GENERATED from a portable ProtocolSpec - do not edit by hand.
-Edit the spec and re-render. Source protocol: whole-genome sequencing - Full (portable, Studio45)."""
+Edit the spec and re-render. Source protocol: Whole-genome sequencing - Full (portable, Studio45)."""
 from opentrons import protocol_api
 
 requirements = {"robotType": "Flex", "apiLevel": "2.21"}
 metadata = {
-    "protocolName": 'whole-genome sequencing - Full (portable, Studio45)',
+    "protocolName": 'Whole-genome sequencing - Full (portable, Studio45)',
     "description": 'Full WGA + Library Prep + Bead Cleanup. Reagents per reservoir well.',
     "author": "portable-backend",
 }
@@ -103,9 +103,9 @@ def run(protocol: protocol_api.ProtocolContext):
 
     protocol.pause('THERMAL CYCLER LIB-AMP (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.')
 
-    protocol.pause('Vortex Resolve Beads 10s. Fresh 80% EtOH in bead reservoir A2.')
+    protocol.pause('Vortex SPRI magnetic cleanup beads 10s. Fresh 80% EtOH in bead reservoir A2.')
 
-    # Add Resolve Beads
+    # Add SPRI magnetic cleanup beads
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(30.0, bead_res["A1"].bottom(z=5.0))
@@ -177,4 +177,3 @@ def run(protocol: protocol_api.ProtocolContext):
         pipette.return_tip()
 
     protocol.pause('DONE. POST-QC: Qubit HS + Tapestation HS D1000. Pool + final 0.75x cleanup before sequencing.')
-

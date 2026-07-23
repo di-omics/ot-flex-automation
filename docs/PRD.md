@@ -14,7 +14,7 @@ copy-number variants, SNVs, structural variants, aneuploidy, per cell.
 The problem is scale and cost:
 - A batch is ~**300 cells × ~20 embryos ≈ 6,000 single-cell libraries**. No human
   pipettes that by hand.
-- The library-prep chemistry (the vendor whole-genome sequencing) is **expensive** per cell.
+- The whole-genome sequencing preparation chemistry is **expensive** per cell.
 - The downstream analysis is **compute-heavy**.
 
 So: automate the liquid handling, **scale reagent volumes down** to cut per-cell
@@ -79,7 +79,7 @@ sparse single cells into sequencing-ready libraries that flag edit safety per ce
 - Not yet connected to the app/HTTP for programmatic control.
 
 **Software (`ot-flex-automation` repo)**
-- `protocols/resolvedna_wgs_flex.py` - scWGS prep coded end-to-end, but an
+- `protocols/whole_genome_seq_flex.py` - scWGS prep coded end-to-end, but an
   **assumed baseline** (written to the API, not calibrated to this machine). A
   starting hypothesis, not ground truth.
 - `orchestration/` - working decision engine, CSV plate-reader QC, Flex HTTP runner
@@ -121,8 +121,8 @@ real machine, state-aware* - not elegance, and not (yet) accuracy.
       on its own; surface progress; only pause at the genuine off-deck handoffs.
 - [ ] Pass the **≥2-iterations-without-failure** gate on a representative sequence.
 
-### Phase 2 - Faithful whole-genome sequencing actions, end-to-end on Flex
-- [ ] Reconcile `resolvedna_wgs_flex.py` with reality (deck, tips, volumes, pauses).
+### Phase 2 - Faithful whole-genome sequencing preparation, end-to-end on Flex
+- [ ] Reconcile `whole_genome_seq_flex.py` with reality (deck, tips, volumes, pauses).
 - [ ] Dry run end-to-end with **water**; then a small real-reagent run.
 - [ ] Small reagent adds (~1-6 µL): use the slow **1-channel 50 µL** as fallback,
       or fold in the **8-channel 50 µL** (Di's Phase 2) when available.
@@ -180,6 +180,6 @@ real machine, state-aware* - not elegance, and not (yet) accuracy.
 
 ## 11. Proposed single-cell-WGS skill (separate artifact)
 A `single-cell-wgs` skill: deep-dive reference for **executing scWGS from very
-sparse samples** (whole-genome sequencing/whole-genome amplification handling, dropout mitigation, low-input QC) and
+sparse samples** (WGS/WGA handling, dropout mitigation, low-input QC) and
 **analyzing** it (CNV, SNV, SV, aneuploidy) with an eye to compute efficiency.
 Scope and build after Phase 1, grounded in real runs.
