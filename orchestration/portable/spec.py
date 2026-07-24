@@ -25,7 +25,7 @@ LABWARE_KINDS = {
     "pcr_plate_96",   # 96-well PCR plate
     "reservoir_12",   # 12-well reagent reservoir / trough
     "tiprack_200",    # 200 uL filter tips
-    "tiprack_1000",   # 1000 uL tips (Studio45's loaded tips)
+    "tiprack_1000",   # 1000 uL tips
     "magnet",         # magnetic block/module
     "trash",          # waste / trash bin
 }
@@ -57,7 +57,7 @@ class Transfer:
 
     Source and dest are each either a single well ("<labware>:<well>", e.g. a
     reservoir trough or a waste well) or a whole plate ("<labware>"). The mode is
-    inferred from which is which - this covers every motif in the kit protocols:
+    inferred from which is which - this covers the supported protocol motifs:
 
       well  -> plate : distribute a master mix to each sample column (reagent add)
       plate -> well  : pool each column into one well (remove supernatant / EtOH)

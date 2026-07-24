@@ -8,9 +8,8 @@ v1 = CsvPlateReader (watch a file the reader exports + apply a dsDNA standard
 curve). Live SDK / SiLA backends are stubbed -- the CSV path is robust and
 vendor-agnostic, so it's the right first step.
 
-Assay: a dsDNA fluorometric kit in a black 96-well plate (Quant-iT PicoGreen /
-Qubit-in-plate / AccuClear). Reader gives RFU; the standard curve maps RFU ->
-ng/uL.
+Assay: a fluorometric dsDNA assay in a compatible black microplate. The reader
+gives RFU; the standard curve maps RFU to ng/uL.
 """
 from __future__ import annotations
 import csv
@@ -84,7 +83,7 @@ class CsvPlateReader(PlateReader):
 
     def wait_for_export(self, timeout_s: float = 600, poll_s: float = 2.0) -> dict[str, float]:
         """Block until the export file appears (non-empty), then read it.
-        TODO(hunter): guard against partial writes (size stable across 2 polls)."""
+        TODO: guard against partial writes (size stable across 2 polls)."""
         deadline = time.time() + timeout_s
         while time.time() < deadline:
             if self.path.exists() and self.path.stat().st_size > 0:
@@ -123,8 +122,8 @@ class CsvPlateReader(PlateReader):
 
 # ---- live backends (STUB -- see issue: plate-reader CSV adapter) ----------
 class SerialPlateReader(PlateReader):  # pragma: no cover
-    """TODO: drive a reader over serial/USB or a vendor SDK (BMG / Tecan /
-    BioTek / Molecular Devices). SiLA2 is the cross-vendor option. Implement
+    """TODO: drive a reader over serial/USB or a vendor SDK. SiLA2 is a
+    cross-platform option. Implement
     only after the CSV path is proven on a real run."""
     def read_plate(self) -> dict[str, float]:
         raise NotImplementedError("live reader backend not implemented yet")

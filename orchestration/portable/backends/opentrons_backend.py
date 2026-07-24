@@ -5,7 +5,7 @@ hand-written protocols in `protocols/` (api 2.21, 8-channel 1000 uL, per-column
 pick_up/aspirate/dispense loops, pauses for off-deck handoffs). The emitted file
 imports into the Opentrons App and runs / simulates with `opentrons_simulate`.
 
-  mount        : "left" or "right" (Studio45's p1000 is on the LEFT)
+  mount        : "left" or "right"
   return_tips  : for water testing - return tips to the rack instead of
                  trashing them, so a dry run doesn't consume the rack.
 """
