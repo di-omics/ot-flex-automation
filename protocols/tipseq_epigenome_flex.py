@@ -3,16 +3,15 @@ from opentrons import protocol_api
 # ──────────────────────────────────────────────────────────────────────
 # TIP-seq Epigenomic Profiling - Library Construction (Opentrons Flex)
 #
-# Adapts the TIP-seq protocol (Di Hu v4.9, embryo D7 blastocyst pilot;
-# Bartlett 2021 / Kaya-Okur 2019) for the Flex. TIP-seq amplifies genome
-# coverage from low-input / single-cell chromatin to map disease-risk
-# variants in non-coding regulatory regions to function.
+# Adapts the TIP-seq method (Bartlett 2021 / Kaya-Okur 2019) for the Flex.
+# TIP-seq increases coverage from low-input or single-cell chromatin for
+# epigenomic profiling of non-coding regulatory regions.
 #
 # STATUS: DRAFT - adaptation of a manual, tube-based single-cell method
 # to a plate-based robot. Automates the enzymatic LIBRARY-CONSTRUCTION
 # steps (Day 2 tagmentation -> Day 3 PCR) + the SPRI cleanups. NOT yet
 # bench-validated. The whole-genome sequencing protocol in this repo is the only
-# bench-run one; this and the EM-seq protocol are scaffolds.
+# bench-run one; this and the methylation sequencing protocol are scaffolds.
 #
 # AUTOMATION BOUNDARY - what the Flex does vs. the operator:
 #   MANUAL (pre-flight, off-robot): ConA bead activation, cell thaw +
@@ -21,9 +20,9 @@ from opentrons import protocol_api
 #   CUTAC arms. These are delicate single-cell steps - done by hand.
 #   ROBOT (this protocol): from tagmentation onward - every enzymatic /
 #   master-mix addition and all SPRI cleanups. Thermal-cycler programs,
-#   incubations, magnet moves, and Qubit checkpoints are pauses.
+#   incubations, magnet moves, and fluorometric DNA quantification checkpoints are pauses.
 #
-# ⚠️ BEAD CARRY-THROUGH (TIP-seq's defining gotcha): AMPure XP beads added
+# ⚠️ BEAD CARRY-THROUGH (TIP-seq's defining gotcha): DNA cleanup beads added
 #   at Day 2 Step 4 are RETAINED in-well through gap fill -> IVT -> RNA
 #   SPRI -> RT -> 2nd-strand SPRI -> fragmentation. Only the Day 3
 #   fragmentation SPRI transfers eluate to a fresh plate and discards
@@ -51,8 +50,8 @@ metadata = {
     "author": "Di Hu",
     "description": (
         "TIP-seq library construction on Opentrons Flex (tagmentation -> PCR). "
-        "Low-input / single-cell epigenomic profiling for non-coding regulatory "
-        "disease-risk mapping. 200 uL filter tips. DRAFT - not bench-validated."
+        "Low-input and single-cell profiling of non-coding regulatory regions. "
+        "200 uL filter tips. DRAFT - not bench-validated."
     ),
 }
 
@@ -60,7 +59,7 @@ metadata = {
 # CONFIG
 # ══════════════════════════════════════════════════════════════════════
 NUM_SAMPLES = 8     # must be a multiple of 8 (arms A / B / C / IgG map to wells)
-PCR_CYCLES  = 9     # v4.9 default; Pol2S5p arm may need 10
+PCR_CYCLES  = 9     # validation starting point; tune by input and target
 
 RIGHT_PIPETTE = "flex_8channel_1000"   # 200 uL tips run on the 1000 uL pipette
 LEFT_PIPETTE  = "flex_1channel_50"     # not used - see CAVEATS (small-volume adds)
@@ -88,7 +87,7 @@ SSS_VOL      = 2.5    # sss_bulk-nXT 20 uM                  (small)
 SS_TAQ_VOL   = 5.9    # Taq 5x Master Mix (second strand)
 FRAG_VOL     = 4.0    # 10 mM TAPS 2 + 0.7 uM Tn5-ME-B 2
 GUHCL_VOL    = 11.0   # 8M GuHCl -> 4M final
-PCR_VOL      = 24.0   # NEBNext HiFi 2x 20 + i5 2 + i7 2
+PCR_VOL      = 24.0   # high-fidelity PCR master mix 20 + i5 2 + i7 2
 
 # SPRI cleanups - (bind reagent vol, supernatant vol, elute vol, transfer vol)
 # Step 4 / Step 1 / Step 3 keep beads; Step 5 / Step 6 transfer + discard beads.
@@ -224,7 +223,8 @@ def run(protocol: protocol_api.ProtocolContext):
               "A8 sss A9 frag-Tn5 A10 GuHCl A11 PCR A12 EDTA)")
     reservoir = protocol.load_labware(
         "nest_12_reservoir_15ml", SLOT_RESERVOIR,
-        label="Bead/wash (A1 AMPure A2 EtOH A3 binding A4 elution A5 AMPure-PCR A12 waste)")
+        label="Bead/wash (A1 cleanup beads A2 EtOH A3 binding A4 elution "
+              "A5 PCR cleanup beads A12 waste)")
 
     tips_1 = protocol.load_labware("opentrons_flex_96_filtertiprack_200ul", SLOT_TIPS_1)
     tips_2 = protocol.load_labware("opentrons_flex_96_filtertiprack_200ul", SLOT_TIPS_2)
@@ -248,11 +248,11 @@ def run(protocol: protocol_api.ProtocolContext):
     pcr_mix  = source["A11"]
     edta     = source["A12"]
 
-    ampure      = reservoir["A1"]    # carry-through beads (Day2 S4 onward)
+    cleanup_beads = reservoir["A1"]  # carry-through beads (Day2 S4 onward)
     etoh        = reservoir["A2"]
     binding     = reservoir["A3"]    # SPRI binding buffer (PEG/NaCl) for rebinds
     elution     = reservoir["A4"]    # nuclease-free water / Tris
-    ampure_pcr  = reservoir["A5"]    # SEPARATE fresh beads for post-PCR left-side
+    pcr_cleanup_beads = reservoir["A5"]  # separate fresh beads for post-PCR cleanup
     waste       = reservoir["A12"]
 
     work, dest = plate_a, plate_b
@@ -285,12 +285,12 @@ def run(protocol: protocol_api.ProtocolContext):
     # DAY 2 STEP 4 - DNA purification  (beads ENTER and are RETAINED)
     # ══════════════════════════════════════════════════════════════════
     protocol.pause(
-        "ProtK mix -> A2 (ProteinaseK 20 mg/mL + 10% SDS). AMPure XP (carry-through) -> A1.\n"
+        "ProtK mix -> A2 (ProteinaseK 20 mg/mL + 10% SDS). DNA cleanup beads (carry-through) -> A1.\n"
         "SPRI binding buffer -> A3, elution water -> A4."
     )
     add_reagent(pip, protk, PROTK_VOL, first_cols(work, NUM_COLUMNS))  # 2.5 uL - small
     protocol.pause("Seal. 50C 30 min (ProteinaseK release). Then ice. Resume for SPRI.")
-    work = spri(protocol, pip, work, dest, NUM_COLUMNS, ampure, SPRI_DNA,
+    work = spri(protocol, pip, work, dest, NUM_COLUMNS, cleanup_beads, SPRI_DNA,
                 etoh, elution, waste, keep_beads=True, label="DAY2 S4 DNA SPRI (2x, KEEP beads)")
 
     # ══════════════════════════════════════════════════════════════════
@@ -358,9 +358,9 @@ def run(protocol: protocol_api.ProtocolContext):
     dest = plate_a if work is plate_b else plate_b
 
     # ══════════════════════════════════════════════════════════════════
-    # DAY 3 STEP 6 - PCR indexing  (+ pre/post-SPRI Qubit, left-side SPRI)
+    # DAY 3 STEP 6 - PCR indexing  (+ pre/post-SPRI fluorometric DNA quantification, left-side SPRI)
     # ══════════════════════════════════════════════════════════════════
-    protocol.pause("PCR mix -> A11 (NEBNext HiFi 2x 20 + i5 2 + i7 2). Fresh AMPure XP -> A5.")
+    protocol.pause("PCR mix -> A11 (high-fidelity PCR master mix 2x 20 + i5 2 + i7 2). Fresh DNA cleanup beads -> A5.")
     add_reagent(pip, pcr_mix, PCR_VOL, first_cols(work, NUM_COLUMNS))
     protocol.pause(
         f"Seal. THERMAL CYCLER - PCR (lid 105C):\n"
@@ -368,20 +368,20 @@ def run(protocol: protocol_api.ProtocolContext):
         f"  Pol2S5p arm may need 10 cycles. Return plate."
     )
     protocol.pause(
-        "PRE-SPRI QUBIT (mandatory): pull 1 uL from each well, Qubit HS dsDNA.\n"
+        "PRE-SPRI DNA QUANTIFICATION (mandatory): pull 1 uL from each well.\n"
         "  >=1 ng/uL -> proceed.  0.3-1 -> +5 cyc top-up.  <0.3 -> +6 cyc.\n"
         "  Catches SPRI-loss vs PCR-failure. Resume when ready for 0.8x cleanup."
     )
     fresh_slot = SLOT_PLATE_A if dest is plate_a else SLOT_PLATE_B
     protocol.pause(f"Place a FRESH PCR plate in slot {fresh_slot} (final library plate).")
-    work = spri(protocol, pip, work, dest, NUM_COLUMNS, ampure_pcr, SPRI_PCR,
+    work = spri(protocol, pip, work, dest, NUM_COLUMNS, pcr_cleanup_beads, SPRI_PCR,
                 etoh, elution, waste, keep_beads=False,
                 label="DAY3 S6 post-PCR SPRI (0.8x left-side, TRANSFER)")
 
     final_slot = SLOT_PLATE_A if work is plate_a else SLOT_PLATE_B
     protocol.comment(f"DONE - TIP-seq libraries in slot {final_slot}.")
     protocol.pause(
-        "POST-SPRI QUBIT (mandatory): re-Qubit final eluate.\n"
-        "  >=50% of pre-SPRI -> ship to TapeStation HS D1000 + sequencing.\n"
+        "POST-SPRI DNA QUANTIFICATION (mandatory): quantify the final eluate.\n"
+        "  >=50% of pre-SPRI -> ship to fragment analysis + sequencing.\n"
         "  <50% -> SPRI loss; re-amp eluate (15 total cycles) to rescue."
     )

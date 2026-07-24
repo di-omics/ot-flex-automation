@@ -6,7 +6,7 @@ can't branch on a live sensor reading. To act on a plate read or a camera call
 you drive the robot from OUTSIDE that flow -- over the HTTP API, or by running
 commands in the Flex's Jupyter / SSH session. This wraps the moves the QC loop
 needs:
-  * resume a run paused at a Qubit checkpoint
+  * resume a run paused at a DNA-quantification checkpoint
   * (later) add PCR cycles / re-queue a cleanup segment
 
 dry_run=True prints intended calls instead of hitting the robot, so the loop is
@@ -44,7 +44,7 @@ class FlexLink:
     def pause_run(self, run_id: str):
         return self._post(f"/runs/{run_id}/actions", json={"data": {"actionType": "pause"}})
 
-    # TODO(hunter): cycle top-up / segment re-queue. Cleanest path is to make
+    # TODO: cycle top-up / segment re-queue. Cleanest path is to make
     # each PCR/cleanup stage its own launchable segment so the orchestrator can
     # run "PCR +N cycles" on demand. See the runner issue.
 
