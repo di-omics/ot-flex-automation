@@ -1,11 +1,11 @@
 """AUTO-GENERATED from a portable ProtocolSpec - do not edit by hand.
-Edit the spec and re-render. Source protocol: Whole-genome sequencing - Full (portable, Studio45)."""
+Edit the spec and re-render. Source protocol: Whole-Genome Sequencing Preparation."""
 from opentrons import protocol_api
 
 requirements = {"robotType": "Flex", "apiLevel": "2.21"}
 metadata = {
-    "protocolName": 'Whole-genome sequencing - Full (portable, Studio45)',
-    "description": 'Full WGA + Library Prep + Bead Cleanup. Reagents per reservoir well.',
+    "protocolName": 'Whole-Genome Sequencing Preparation',
+    "description": 'Genome amplification, library preparation, and bead cleanup.',
     "author": "portable-backend",
 }
 
@@ -33,45 +33,45 @@ def run(protocol: protocol_api.ProtocolContext):
         pipette.pick_up_tip()
         pipette.aspirate(5.0, reagent_res["A1"].bottom(z=5.0))
         pipette.dispense(5.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     protocol.pause('Seal. Incubate RT on ice 20 min. Resume.')
 
-    protocol.pause('REACTION MIX in reagent reservoir A2.')
+    protocol.pause('AMPLIFICATION MIX in reagent reservoir A2.')
 
-    # Distribute Reaction Mix
+    # Distribute Amplification Mix
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(6.0, reagent_res["A2"].bottom(z=5.0))
         pipette.dispense(6.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     protocol.pause('Seal/flick/spin. THERMAL CYCLER DNA Amplification (lid 70C): 30C 2.5h -> 65C 3min -> 4C. Return plate.')
 
-    protocol.pause('QC: Qubit HS >800 ng avg; Tapestation ~1275 bp. Prepare 2 ng/uL normalized plate. Return to B2.')
+    protocol.pause('QC: fluorometric DNA yield >800 ng average; fragment size ~1275 bp. Prepare 2 ng/uL normalized plate. Return to B2.')
 
-    protocol.pause('DNA PREP MIX in reagent reservoir A3.')
+    protocol.pause('END-PREPARATION MIX in reagent reservoir A3.')
 
-    # Distribute DNA Prep
+    # Distribute end-preparation mix
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(5.0, reagent_res["A3"].bottom(z=5.0))
         pipette.dispense(5.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
-    protocol.pause('THERMAL CYCLER DNAPREP (lid 105C): 37C 10min -> 4C. Return on ice.')
+    protocol.pause('THERMAL CYCLER END PREPARATION (lid 105C): 37C 10min -> 4C. Return on ice.')
 
-    protocol.pause('FERAT MIX in reagent reservoir A4.')
+    protocol.pause('REPAIR MIX in reagent reservoir A4.')
 
-    # Distribute FERAT + mix
+    # Distribute repair mix
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(5.0, reagent_res["A4"].bottom(z=5.0))
         pipette.dispense(5.0, _col[0].bottom(z=5.0))
         pipette.mix(5, 5, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
-    protocol.pause('THERMAL CYCLER FERAT (lid 105C): 4C 30s -> 30C 5min -> 65C 30min -> 4C.')
+    protocol.pause('THERMAL CYCLER REPAIR (lid 105C): 4C 30s -> 30C 5min -> 65C 30min -> 4C.')
 
     protocol.pause('Vortex adapter plate briefly. Spin down.')
 
@@ -80,37 +80,37 @@ def run(protocol: protocol_api.ProtocolContext):
         pipette.pick_up_tip()
         pipette.aspirate(5.0, reagent_res["A6"].bottom(z=5.0))
         pipette.dispense(5.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
-    # Distribute LP2L
+    # Distribute ligation reagent
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(5.0, reagent_res["A5"].bottom(z=5.0))
         pipette.dispense(5.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     protocol.pause('Seal. Vortex medium. Spin. Incubate RT 15 min. Proceed.')
 
-    protocol.pause('AMP MIX in reagent reservoir A7. Start LIB-AMP, pause at 98C.')
+    protocol.pause('LIBRARY-AMPLIFICATION MIX in reagent reservoir A7. Start the program and pause at 98C.')
 
-    # Distribute Amp Mix + mix
+    # Distribute library-amplification mix
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(20.0, reagent_res["A7"].bottom(z=5.0))
         pipette.dispense(20.0, _col[0].bottom(z=5.0))
         pipette.mix(5, 20, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
-    protocol.pause('THERMAL CYCLER LIB-AMP (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.')
+    protocol.pause('THERMAL CYCLER LIBRARY AMPLIFICATION (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.')
 
-    protocol.pause('Vortex SPRI magnetic cleanup beads 10s. Fresh 80% EtOH in bead reservoir A2.')
+    protocol.pause('Vortex SPRI beads 10s. Fresh 80% EtOH in bead reservoir A2.')
 
-    # Add SPRI magnetic cleanup beads
+    # Add SPRI beads
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(30.0, bead_res["A1"].bottom(z=5.0))
         pipette.dispense(30.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     protocol.pause('Seal. Vortex 10s. Incubate RT 5 min. Spin. Place plate ON Magnetic Block (C2). Wait 3 min until clear.')
 
@@ -119,14 +119,14 @@ def run(protocol: protocol_api.ProtocolContext):
         pipette.pick_up_tip()
         pipette.aspirate(70.0, _col[0].bottom(z=5.0))
         pipette.dispense(70.0, bead_res["A12"].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     # EtOH wash 1 add
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(180.0, bead_res["A2"].bottom(z=5.0))
         pipette.dispense(180.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     protocol.delay(seconds=30, msg='EtOH wash 1 soak')
 
@@ -135,14 +135,14 @@ def run(protocol: protocol_api.ProtocolContext):
         pipette.pick_up_tip()
         pipette.aspirate(180.0, _col[0].bottom(z=5.0))
         pipette.dispense(180.0, bead_res["A12"].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     # EtOH wash 2 add
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(180.0, bead_res["A2"].bottom(z=5.0))
         pipette.dispense(180.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     protocol.delay(seconds=30, msg='EtOH wash 2 soak')
 
@@ -151,7 +151,7 @@ def run(protocol: protocol_api.ProtocolContext):
         pipette.pick_up_tip()
         pipette.aspirate(180.0, _col[0].bottom(z=5.0))
         pipette.dispense(180.0, bead_res["A12"].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     protocol.pause('Remove residual EtOH with P20. Air dry 3 min - do NOT over-dry.')
 
@@ -163,7 +163,7 @@ def run(protocol: protocol_api.ProtocolContext):
         pipette.aspirate(42.0, bead_res["A3"].bottom(z=5.0))
         pipette.dispense(42.0, _col[0].bottom(z=5.0))
         pipette.mix(10, 35, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
     protocol.pause('Incubate RT 2 min. Return to magnet. Wait 2 min until clear.')
 
@@ -174,6 +174,6 @@ def run(protocol: protocol_api.ProtocolContext):
         pipette.pick_up_tip()
         pipette.aspirate(40.0, _s.bottom(z=5.0))
         pipette.dispense(40.0, _d.bottom(z=5.0))
-        pipette.return_tip()
+        pipette.drop_tip()
 
-    protocol.pause('DONE. POST-QC: Qubit HS + Tapestation HS D1000. Pool + final 0.75x cleanup before sequencing.')
+    protocol.pause('DONE. POST-QC: fluorometric DNA quantification and fragment analysis. Pool + final 0.75x cleanup before sequencing.')

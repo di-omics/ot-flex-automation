@@ -23,8 +23,7 @@ def run(protocol: protocol_api.ProtocolContext):
     pipette = protocol.load_instrument("flex_8channel_1000", mount="left", tip_racks=[tips])
 
     # Move 50 uL water to each column
-    _cols = [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]
-    for _col in _cols:
+    for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
         pipette.aspirate(50.0, source_plate["A1"].bottom(z=5.0))
         pipette.dispense(50.0, _col[0].bottom(z=5.0))

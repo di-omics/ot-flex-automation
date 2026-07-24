@@ -1,22 +1,23 @@
-## Plate-reader CSV adapter (Qubit-replacement QC)
+## Plate-reader CSV adapter
 
-Finish `orchestration/instruments/plate_reader.py` so a fluorescence microplate reader's export drives the SPRI-checkpoint QC instead of a manual Qubit.
+Complete `orchestration/instruments/plate_reader.py` so a fluorescence
+microplate-reader export drives the SPRI-checkpoint QC.
 
-### Context
-The protocols pause at Qubit checkpoints with the accept/branch rules already encoded in `decisions.py`. Goal: reader -> `{well: ng/uL}` -> `decisions.py`.
+### Scope
 
-### Scope (v1 = CSV, vendor-agnostic)
-- [ ] Confirm our reader's export format (long vs grid) and lock `CsvPlateReader` to it.
-- [ ] Standard curve from per-run standards (`StandardCurve.from_points`); document where blanks/standards sit on the plate.
-- [ ] Map read-plate wells to sample wells (QC aliquot layout may differ from the prep plate).
-- [ ] `wait_for_export()` robust to partial writes (size stable across two polls).
-- [ ] Unit tests against a couple of anonymized real exports in `examples/`.
+- Confirm the export layout and configure `CsvPlateReader`.
+- Fit a standard curve from per-run DNA standards.
+- Map read-plate wells to preparation-plate wells.
+- Make `wait_for_export()` robust to partial files.
+- Add tests against anonymized exports.
 
-### Out of scope (later)
-Live SDK / SiLA control (`SerialPlateReader` stub) - only after the CSV path is proven on a real run.
+### Later
+
+Add a live SDK or SiLA backend after the CSV path is validated.
 
 ### Done when
-`python -m orchestration.run_qc_loop --dry-run --export <real_export.csv>` gives correct per-well ng/uL and decisions.
 
-Assay: dsDNA fluorometric kit (PicoGreen / Quant-iT / AccuClear), black 96-well.
-cc @spacexengineer
+`python -m orchestration.run_qc_loop --dry-run --export <export.csv>` produces
+the expected per-well concentrations and decisions.
+
+Use a fluorometric dsDNA assay in a compatible black microplate.

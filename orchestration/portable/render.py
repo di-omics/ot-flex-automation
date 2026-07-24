@@ -3,7 +3,7 @@
     python -m orchestration.portable.render --target opentrons        # Flex .py
     python -m orchestration.portable.render --target worklist          # STAR/Bravo CSV
     python -m orchestration.portable.render --target spec              # the portable JSON
-    python -m orchestration.portable.render --target opentrons --out flex_wga.py
+    python -m orchestration.portable.render --target opentrons --out flex_wgs.py
 
 One spec in; the platform-specific artifact out. The spec is the asset that
 survives the move from Flex to Hamilton/Bravo.
@@ -14,21 +14,26 @@ import argparse
 import json
 import sys
 
-from .examples import (whole_genome_seq_wga, hello_water, whole_genome_seq_full,
-                       wga_water_test, wga_move_to_reader)
+from .examples import (
+    hello_water,
+    whole_genome_seq_full,
+    whole_genome_seq_preparation,
+    wgs_preparation_move_to_reader,
+    wgs_preparation_water_test,
+)
 from .backends import (opentrons_backend, worklist_backend, hamilton_backend,
                        pylabrobot_backend)
 
 EXAMPLES = {
-    "wga": whole_genome_seq_wga.build_spec,
+    "wgs_preparation": whole_genome_seq_preparation.build_spec,
     "hello": hello_water.build_spec,
     "whole_genome_seq": whole_genome_seq_full.build_spec,
-    "wga_test": wga_water_test.build_spec,
-    "wga_move": wga_move_to_reader.build_spec,
+    "wgs_test": wgs_preparation_water_test.build_spec,
+    "wgs_move": wgs_preparation_move_to_reader.build_spec,
 }
 
 
-def render(target: str, num_samples: int, example: str = "wga",
+def render(target: str, num_samples: int, example: str = "wgs_preparation",
            mount: str = "right", return_tips: bool = False) -> str:
     spec = EXAMPLES[example](num_samples=num_samples)
     if target == "opentrons":
@@ -48,10 +53,10 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--target", required=True,
                    choices=["opentrons", "worklist", "hamilton", "pylabrobot", "spec"])
-    p.add_argument("--example", default="wga", choices=list(EXAMPLES),
-                   help="which portable spec to render (default: wga)")
+    p.add_argument("--example", default="wgs_preparation", choices=list(EXAMPLES),
+                   help="which portable spec to render (default: wgs_preparation)")
     p.add_argument("--mount", default="right", choices=["left", "right"],
-                   help="Opentrons pipette mount (Studio45's p1000 is on the LEFT)")
+                   help="Opentrons pipette mount")
     p.add_argument("--return-tips", action="store_true",
                    help="return tips to the rack instead of trashing (water testing)")
     p.add_argument("--num-samples", type=int, default=8)

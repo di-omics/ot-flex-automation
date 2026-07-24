@@ -16,7 +16,7 @@ the 1-3% CV target is hit. The spec is the asset that survives the move.
    examples/*.py ─▶ │   ProtocolSpec (spec.py) │ ─┐  the portable asset
                     │   volumes · src->dst · QC │  │  (also JSON: --target spec)
                     └─────────────────────────┘  │
-                                                  ├─▶ opentrons_backend  -> Flex .py (runs on Studio45)
+                                                  ├─▶ opentrons_backend  -> Flex .py
                                                   ├─▶ pylabrobot_backend -> Hamilton STAR .py (PyLabRobot)
                                                   ├─▶ worklist_backend   -> CSV (STAR/Bravo import)
                                                   └─▶ hamilton_backend   -> native Venus method (Phase 3)
@@ -26,11 +26,11 @@ the 1-3% CV target is hit. The spec is the asset that survives the move.
 
 ```bash
 # Flex protocol (imports into the Opentrons App; simulates clean):
-python -m orchestration.portable.render --target opentrons --out flex_wga.py
-opentrons_simulate flex_wga.py
+python -m orchestration.portable.render --target opentrons --out flex_wgs.py
+opentrons_simulate flex_wgs.py
 
 # Hamilton STAR / Agilent Bravo worklist (vendor-neutral transfer list):
-python -m orchestration.portable.render --target worklist --out wga_worklist.csv
+python -m orchestration.portable.render --target worklist --out wgs_worklist.csv
 
 # the portable spec itself, as JSON:
 python -m orchestration.portable.render --target spec
@@ -53,13 +53,13 @@ python -m orchestration.portable.render --target spec
 - `backends/worklist_backend.py` - renders a transfer worklist CSV. **Done.**
 - `backends/hamilton_backend.py` - native Venus = **stub** (Phase 3); interim
   worklist path works today.
-- `examples/whole_genome_seq_wga.py` - the WGA section, transcribed from
+- `examples/whole_genome_seq_preparation.py` - the WGS-preparation section, transcribed from
   `protocols/whole_genome_seq_flex.py`. Extend to the full protocol next.
 
 ## Extending
 
 - **More steps:** add to an example's `steps=[...]`. `Transfer` (per-column
-  distribute) and `Handoff` (operator pause) cover the WGA motif; add step types
+  distribute) and `Handoff` (operator pause) cover the WGS-preparation motif; add step types
   (plate->plate, SPRI cleanup) as the encoded protocol grows.
 - **Full WGS preparation:** transcribe Sections 2-3 (library prep, bead cleanup) into
   the spec, then the *same* spec drives Flex now and STAR/Bravo at port time.

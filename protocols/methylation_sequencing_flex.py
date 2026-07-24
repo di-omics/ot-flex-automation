@@ -1,11 +1,10 @@
 from opentrons import protocol_api
 
 # ──────────────────────────────────────────────────────────────────────
-# EM-seq Epigenetic Clock - Methylation Library Prep (Opentrons Flex)
+# Methylation Sequencing - Library Preparation (Opentrons Flex)
 #
-# Automates the NEBNext Enzymatic Methyl-seq v2 kit (NEB #E8015) on the
-# Flex. Produces genome-wide 5mC/5hmC methylation libraries - the input
-# for epigenetic-aging-clock models (Horvath / PhenoAge / etc.).
+# Automates a conversion-based methylation-sequencing workflow on the
+# Flex. Produces genome-wide methylation libraries for downstream analysis.
 #
 # STATUS: DRAFT - first implementation, motion-test ready, NOT yet
 # bench-validated. The whole-genome sequencing protocol in this repo has been run
@@ -13,15 +12,15 @@ from opentrons import protocol_api
 # point for a validation run, not a finished method.
 #
 # What the Flex does: every enzymatic / master-mix / bead addition.
-# Operator handoffs via protocol.pause(): DNA fragmentation (off-deck,
-# Covaris/UltraShear - done BEFORE this protocol), every thermal-cycler
+# Operator handoffs via protocol.pause(): off-deck DNA fragmentation,
+# every thermal-cycler
 # program, vortex/spin, and moving the plate on/off the Magnetic Block.
 #
 # Enzyme reservoir (12-well, slot B3):
-#   A1 = End Prep MM      A2 = EM-seq Adaptor   A3 = Ligation MM
-#   A4 = TET2 MM          A5 = Diluted Fe(II)   A6 = Stop Reagent
-#   A7 = Formamide        A8 = Deamination MM   A9 = UDI Primers
-#   A10 = Q5U Master Mix
+#   A1 = End Prep MM      A2 = Adapter          A3 = Ligation MM
+#   A4 = Protection MM    A5 = Cofactor         A6 = Stop Reagent
+#   A7 = Denaturation     A8 = Conversion MM    A9 = Index Primers
+#   A10 = PCR Master Mix
 # Bead / wash reservoir (12-well, slot D2):
 #   A1 = Sample Purification Beads   A2 = 80% EtOH
 #   A3 = Elution Buffer              A12 = liquid waste
@@ -48,11 +47,11 @@ from opentrons import protocol_api
 requirements = {"robotType": "Flex", "apiLevel": "2.21"}
 
 metadata = {
-    "protocolName": "EM-seq Epigenetic Clock - Methylation Library Prep",
+    "protocolName": "Methylation Sequencing - Library Preparation",
     "author": "Di Hu",
     "description": (
-        "NEBNext EM-seq v2 (NEB #E8015) on Opentrons Flex. Genome-wide "
-        "methylation libraries for epigenetic-aging-clock analysis. "
+        "Conversion-based methylation sequencing on Opentrons Flex. Genome-wide "
+        "methylation libraries for downstream methylation analysis. "
         "200 uL filter tips. DRAFT - not yet bench-validated."
     ),
 }
@@ -80,14 +79,14 @@ SLOT_TRASH     = "D1"
 # Per-reaction add volumes (uL)
 END_PREP_MM_VOL = 10.0
 ADAPTER_VOL     = 2.5    # small - 50 uL pipette for real run
-LIG_MM_VOL      = 31.0   # Ligation Enhancer (1) + Ultra II Ligation MM (30)
-TET2_MM_VOL     = 17.0   # TET2 buf (10) + UDP-Glc (1) + DTT (1) + T4-BGT (1) + TET2 (4)
-FE_VOL          = 5.0
+LIG_MM_VOL      = 31.0
+PROTECTION_MM_VOL = 17.0
+COFACTOR_VOL    = 5.0
 STOP_VOL        = 1.0    # small - 50 uL pipette for real run
-FORMAMIDE_VOL   = 4.0
-DEAM_MM_VOL     = 20.0   # water (14) + Deam buf (4) + Albumin (1) + APOBEC (1)
+DENATURATION_VOL = 4.0
+CONVERSION_MM_VOL = 20.0
 PRIMER_VOL      = 5.0
-Q5U_VOL         = 45.0
+PCR_MM_VOL      = 45.0
 
 # Bead cleanups - (bead_vol, pre-bead reaction vol, elute vol, transfer vol)
 BEADS_LIG,  RXN_LIG,  ELUTE_LIG,  XFER_LIG  = 93.0, 93.5, 29.0, 28.0   # 1.0X
@@ -101,10 +100,10 @@ NUM_COLUMNS = (NUM_SAMPLES + 7) // 8
 # Thermal-cycler programs (external bench cycler):
 # End Prep      (lid >=75C):  20C 15min -> 65C 15min -> 4C
 # Ligation      (lid OFF):    20C 15min -> 4C
-# TET2 oxidn    (lid >=45C):  37C 1h -> 4C
+# Protection    (lid >=45C):  37C 1h -> 4C
 # Stop          (lid >=45C):  37C 30min -> 4C
 # Denaturation  (lid >=105C): 85C 10min -> snap-cool on ice
-# Deamination   (lid >=45C):  37C 3h -> 4C
+# Conversion    (lid >=45C):  37C 3h -> 4C
 # PCR           (lid 105C):   98C 30s -> [98C 10s / 62C 30s / 65C 60s]xN -> 65C 5min -> 4C
 
 
@@ -116,19 +115,20 @@ def ligation_mm(n):
     s = n * OVERAGE
     return {"LigationEnhancer": round(1*s, 1), "LigationMasterMix": round(30*s, 1)}
 
-def tet2_mm(n):
+def protection_mm(n):
     s = n * OVERAGE
-    return {"TET2Buffer": round(10*s, 1), "UDPGlucose": round(1*s, 1),
-            "DTT": round(1*s, 1), "T4BGT": round(1*s, 1), "TET2": round(4*s, 1)}
+    return {"ProtectionBuffer": round(10*s, 1), "Cofactor": round(1*s, 1),
+            "ReducingAgent": round(1*s, 1), "EnzymeA": round(1*s, 1),
+            "EnzymeB": round(4*s, 1)}
 
-def deamination_mm(n):
+def conversion_mm(n):
     s = n * OVERAGE
-    return {"Water": round(14*s, 1), "DeamBuffer": round(4*s, 1),
-            "Albumin": round(1*s, 1), "APOBEC": round(1*s, 1)}
+    return {"Water": round(14*s, 1), "ConversionBuffer": round(4*s, 1),
+            "CarrierProtein": round(1*s, 1), "ConversionEnzyme": round(1*s, 1)}
 
 def pcr_mm(n):
     s = n * OVERAGE
-    return {"Q5UMasterMix": round(45*s, 1)}
+    return {"PCRMasterMix": round(45*s, 1)}
 
 
 def first_cols(plate, n):
@@ -216,7 +216,7 @@ def bead_cleanup(protocol, pip, src_plate, dst_plate, ncols,
 
 def run(protocol: protocol_api.ProtocolContext):
 
-    protocol.comment(f"EM-seq v2 | {NUM_SAMPLES} samples | {NUM_COLUMNS} column(s) | DRAFT")
+    protocol.comment(f"Methylation sequencing | {NUM_SAMPLES} samples | {NUM_COLUMNS} column(s) | DRAFT")
 
     # Modules
     mag = protocol.load_module("magneticBlockV1", SLOT_MAG_BLOCK)
@@ -228,7 +228,8 @@ def run(protocol: protocol_api.ProtocolContext):
         "nest_96_wellplate_100ul_pcr_full_skirt", SLOT_PLATE_B, label="Plate B")
     source = protocol.load_labware(
         "nest_12_reservoir_15ml", SLOT_SOURCE,
-        label="Enzymes (A1 EndPrep A2 Adaptor A3 LigMM A4 TET2 A5 Fe A6 Stop A7 Formamide A8 DeamMM A9 UDI A10 Q5U)")
+        label="Reagents (A1 EndPrep A2 Adapter A3 LigMM A4 Protection A5 Cofactor "
+              "A6 Stop A7 Denaturation A8 Conversion A9 Index A10 PCR)")
     reservoir = protocol.load_labware(
         "nest_12_reservoir_15ml", SLOT_RESERVOIR,
         label="Bead/wash (A1 beads A2 EtOH A3 elution A12 waste)")
@@ -245,13 +246,13 @@ def run(protocol: protocol_api.ProtocolContext):
     endprep   = source["A1"]
     adaptor   = source["A2"]
     ligmm     = source["A3"]
-    tet2mm    = source["A4"]
-    fe        = source["A5"]
+    protection_source = source["A4"]
+    cofactor  = source["A5"]
     stop      = source["A6"]
-    formamide = source["A7"]
-    deammm    = source["A8"]
-    udi       = source["A9"]
-    q5u       = source["A10"]
+    denaturation = source["A7"]
+    conversion_source = source["A8"]
+    index_primers = source["A9"]
+    pcr_source = source["A10"]
 
     beads   = reservoir["A1"]
     etoh    = reservoir["A2"]
@@ -263,8 +264,8 @@ def run(protocol: protocol_api.ProtocolContext):
     # Pre-flight
     protocol.pause(
         "INPUT: Plate A (B2) holds 50 uL fragmented DNA per well\n"
-        "(sample + Unmethylated Lambda + CpG-methylated pUC19 controls,\n"
-        "sheared to ~350 bp off-instrument via Covaris/UltraShear).\n"
+        "(sample + unmethylated and methylated spike-in controls,\n"
+        "fragmented to the locally validated target size off-instrument).\n"
         "MOTION TEST: load water in enzyme A1-A10 and bead reservoir A1-A3 instead."
     )
 
@@ -283,9 +284,9 @@ def run(protocol: protocol_api.ProtocolContext):
     # ── SECTION 2 - Adaptor Ligation ──────────────────────────────────
     lg = ligation_mm(NUM_SAMPLES)
     protocol.pause(
-        f"LIGATION MM (premix Enhancer + Ultra II Ligation MM only -> A3):\n"
+        f"LIGATION MM (premix enhancer + ligation master mix -> A3):\n"
         f"  Ligation Enhancer {lg['LigationEnhancer']} uL + Ligation MM {lg['LigationMasterMix']} uL\n"
-        f"EM-seq Adaptor (neat) -> A2. Do NOT premix adaptor into the ligation MM."
+        f"Adapter (neat) -> A2. Do NOT premix adapter into the ligation MM."
     )
     add_reagent(pip, adaptor, ADAPTER_VOL, first_cols(work, NUM_COLUMNS))   # 2.5 uL - small
     add_reagent(pip, ligmm,   LIG_MM_VOL,  first_cols(work, NUM_COLUMNS))
@@ -300,18 +301,19 @@ def run(protocol: protocol_api.ProtocolContext):
                  BEADS_LIG, RXN_LIG, ELUTE_LIG, XFER_LIG, "POST-LIGATION CLEANUP (1.0X)")
     work, dest = dest, work   # clean DNA now in `work`
 
-    # ── SECTION 4 - Protection of 5mC/5hmC (TET2 oxidation) ───────────
-    tt = tet2_mm(NUM_SAMPLES)
+    # ── SECTION 4 - Base protection ───────────────────────────────────
+    protection = protection_mm(NUM_SAMPLES)
     protocol.pause(
-        f"TET2 MM (reconstitute TET2 Buffer Supplement first; premix -> A4):\n"
-        f"  TET2 Buffer {tt['TET2Buffer']} + UDP-Glucose {tt['UDPGlucose']} + DTT {tt['DTT']}"
-        f" + T4-BGT {tt['T4BGT']} + TET2 {tt['TET2']} uL"
+        f"PROTECTION MM (premix -> A4):\n"
+        f"  Protection buffer {protection['ProtectionBuffer']} + cofactor {protection['Cofactor']}"
+        f" + reducing agent {protection['ReducingAgent']} + enzyme A {protection['EnzymeA']}"
+        f" + enzyme B {protection['EnzymeB']} uL"
     )
-    add_reagent(pip, tet2mm, TET2_MM_VOL, first_cols(work, NUM_COLUMNS))
-    protocol.pause("DILUTE Fe(II): 1 uL 500 mM Fe(II) into 1249 uL water (use immediately) -> A5.")
-    add_reagent(pip, fe, FE_VOL, first_cols(work, NUM_COLUMNS))
+    add_reagent(pip, protection_source, PROTECTION_MM_VOL, first_cols(work, NUM_COLUMNS))
+    protocol.pause("Prepare the protection cofactor per the locally validated SOP -> A5.")
+    add_reagent(pip, cofactor, COFACTOR_VOL, first_cols(work, NUM_COLUMNS))
     protocol.pause(
-        "Seal, vortex, spin. THERMAL CYCLER - TET2 oxidation (lid >=45C):\n"
+        "Seal, vortex, spin. THERMAL CYCLER - Protection (lid >=45C):\n"
         "  37C 1h -> 4C hold. Return plate ON ICE."
     )
     add_reagent(pip, stop, STOP_VOL, first_cols(work, NUM_COLUMNS))   # 1 uL - small
@@ -328,36 +330,37 @@ def run(protocol: protocol_api.ProtocolContext):
                  BEADS_PROT, RXN_PROT, ELUTE_PROT, XFER_PROT, "POST-PROTECTION CLEANUP (1.0X)")
     work, dest = dest, work
 
-    # ── SECTION 6 - Denaturation (Formamide) ──────────────────────────
-    protocol.pause("Formamide (neat) -> A7. Preheat cycler to 85C (lid >=105C).")
-    add_reagent(pip, formamide, FORMAMIDE_VOL, first_cols(work, NUM_COLUMNS))
+    # ── SECTION 6 - Denaturation ──────────────────────────────────────
+    protocol.pause("Denaturation reagent -> A7. Preheat cycler to 85C (lid >=105C).")
+    add_reagent(pip, denaturation, DENATURATION_VOL, first_cols(work, NUM_COLUMNS))
     protocol.pause(
         "Seal, vortex, spin. THERMAL CYCLER - Denaturation:\n"
         "  85C 10min, then snap-cool on ice ~2 min. Return plate ON ICE."
     )
 
-    # ── SECTION 7 - Deamination (APOBEC) ──────────────────────────────
-    dm = deamination_mm(NUM_SAMPLES)
+    # ── SECTION 7 - Conversion ────────────────────────────────────────
+    conversion = conversion_mm(NUM_SAMPLES)
     protocol.pause(
-        f"DEAMINATION MM (premix -> A8):\n"
-        f"  Nuclease-free water {dm['Water']} + Deam Buffer {dm['DeamBuffer']}"
-        f" + Albumin {dm['Albumin']} + APOBEC {dm['APOBEC']} uL"
+        f"CONVERSION MM (premix -> A8):\n"
+        f"  Nuclease-free water {conversion['Water']} + conversion buffer "
+        f"{conversion['ConversionBuffer']} + carrier protein {conversion['CarrierProtein']}"
+        f" + conversion enzyme {conversion['ConversionEnzyme']} uL"
     )
-    add_reagent(pip, deammm, DEAM_MM_VOL, first_cols(work, NUM_COLUMNS))
+    add_reagent(pip, conversion_source, CONVERSION_MM_VOL, first_cols(work, NUM_COLUMNS))
     protocol.pause(
-        "Seal, vortex, spin. THERMAL CYCLER - Deamination (lid >=45C):\n"
+        "Seal, vortex, spin. THERMAL CYCLER - Conversion (lid >=45C):\n"
         "  37C 3h -> 4C hold. NO cleanup - straight to PCR. Return plate."
     )
 
     # ── SECTION 8 - PCR Amplification ─────────────────────────────────
     pc = pcr_mm(NUM_SAMPLES)
     protocol.pause(
-        f"Q5U Master Mix -> A10: {pc['Q5UMasterMix']} uL.\n"
-        f"UDI primer pairs -> A9 (one unique pair per sample/well for a real run;\n"
+        f"PCR master mix -> A10: {pc['PCRMasterMix']} uL.\n"
+        f"Index primer pairs -> A9 (one unique pair per sample/well for a real run;\n"
         f"single well OK for a motion test)."
     )
-    add_reagent(pip, udi, PRIMER_VOL, first_cols(work, NUM_COLUMNS))
-    add_reagent(pip, q5u, Q5U_VOL,    first_cols(work, NUM_COLUMNS))
+    add_reagent(pip, index_primers, PRIMER_VOL, first_cols(work, NUM_COLUMNS))
+    add_reagent(pip, pcr_source, PCR_MM_VOL, first_cols(work, NUM_COLUMNS))
     protocol.pause(
         f"Seal, vortex, spin. THERMAL CYCLER - PCR (lid 105C):\n"
         f"  98C 30s -> [98C 10s / 62C 30s / 65C 60s] x{PCR_CYCLES} -> 65C 5min -> 4C hold.\n"
@@ -373,8 +376,8 @@ def run(protocol: protocol_api.ProtocolContext):
     work, dest = dest, work
 
     final_slot = SLOT_PLATE_A if work is plate_a else SLOT_PLATE_B
-    protocol.comment(f"DONE - EM-seq methylation libraries in slot {final_slot}.")
+    protocol.comment(f"DONE - methylation-sequencing libraries in slot {final_slot}.")
     protocol.pause(
-        "POST-QC: Agilent TapeStation / Bioanalyzer (size + concentration).\n"
-        "Pool, sequence on Illumina, then run methylation calling + clock model."
+        "POST-QC: fragment analysis (size + concentration).\n"
+        "Pool, sequence on the selected platform, then run methylation calling and downstream analysis."
     )

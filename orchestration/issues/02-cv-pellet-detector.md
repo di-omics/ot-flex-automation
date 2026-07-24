@@ -7,7 +7,7 @@ Build `orchestration/vision/pellet_detector.py`: a camera that tells us when a b
 - "Air-dry ... do NOT over-dry (glossy/dark)" -> `dryness` (wet / glossy / matte / cracked)
 
 ### Scope
-- [ ] `FrameSource`: GoPro in Webcam/UVC mode via `cv2.VideoCapture`, plus a generic USB-cam path. NOTE: GoPros throttle on long runs - for the 21 h IVT prefer a fixed USB/industrial cam.
+- [ ] `FrameSource`: a UVC camera via `cv2.VideoCapture`, with a fixed industrial-camera option for long runs.
 - [ ] ROI calibration: map each well to a pixel box on a fixed-mount frame (helper + saved config).
 - [ ] Detector: replace the `OpenCVHeuristicDetector` baseline with a trained classifier (collect labeled frames: cleared/not, dry states). Return state + confidence.
 - [ ] Document the fixed mount + controlled-lighting rig (repeatability is half the problem).
@@ -17,4 +17,3 @@ Build `orchestration/vision/pellet_detector.py`: a camera that tells us when a b
 
 ### Done when
 From a fixed-mount feed it emits per-well `WellObservation` (cleared bool + dryness + confidence) at the magnet and dry steps, logged with the run.
-cc @spacexengineer
