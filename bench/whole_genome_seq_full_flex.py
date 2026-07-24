@@ -1,11 +1,11 @@
 """AUTO-GENERATED from a portable ProtocolSpec - do not edit by hand.
-Edit the spec and re-render. Source protocol: whole-genome sequencing - Full (portable, Studio45)."""
+Edit the spec and re-render. Source protocol: Whole-Genome Sequencing Preparation - Synthetic Motion Profile."""
 from opentrons import protocol_api
 
 requirements = {"robotType": "Flex", "apiLevel": "2.21"}
 metadata = {
-    "protocolName": 'whole-genome sequencing - Full (portable, Studio45)',
-    "description": 'Full WGA + Library Prep + Bead Cleanup. Reagents per reservoir well.',
+    "protocolName": 'Whole-Genome Sequencing Preparation - Synthetic Motion Profile',
+    "description": 'Water-only WGS-preparation choreography; no biological method parameters or QC thresholds.',
     "author": "portable-backend",
 }
 
@@ -17,164 +17,106 @@ def run(protocol: protocol_api.ProtocolContext):
     tips_a = protocol.load_labware('opentrons_flex_96_tiprack_1000ul', 'A1')
     tips_b = protocol.load_labware('opentrons_flex_96_tiprack_1000ul', 'A2')
     trash = protocol.load_trash_bin('A3')
-    sample_plate = protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', 'B2', label='Sample Plate')
-    reagent_res = protocol.load_labware('nest_12_reservoir_15ml', 'B3', label='Reagents A1-A7')
+    sample_plate = protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', 'B2', label='Synthetic-motion plate')
+    profile_stages = protocol.load_labware('nest_12_reservoir_15ml', 'B3', label='Water stages A1-A4')
     magnet = protocol.load_module("magneticBlockV1", 'C2')
-    output_plate = protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', 'C3', label='Output Plate')
-    bead_res = protocol.load_labware('nest_12_reservoir_15ml', 'D2', label='Beads/EtOH/Elution/Waste')
+    output_plate = protocol.load_labware('nest_96_wellplate_100ul_pcr_full_skirt', 'C3', label='Output plate')
+    cleanup_res = protocol.load_labware('nest_12_reservoir_15ml', 'D2', label='Water cleanup A1, wash A2, elution A3, waste A12')
 
     # 8-channel 1000 uL on the left mount, running 200 uL filter tips
     pipette = protocol.load_instrument("flex_8channel_1000", mount="left", tip_racks=[tips_a, tips_b])
 
-    protocol.pause('LYSIS MIX in reagent reservoir A1 (water for motion test).')
+    protocol.pause('PUBLIC MOTION PROFILE - WATER ONLY. Confirm water in stage and cleanup wells; no biological samples or reagents.')
 
-    # Distribute Lysis Mix
+    # Synthetic input-preparation stage
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
-        pipette.aspirate(5.0, reagent_res["A1"].bottom(z=5.0))
-        pipette.dispense(5.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.aspirate(10.0, profile_stages["A1"].bottom(z=5.0))
+        pipette.dispense(10.0, _col[0].bottom(z=5.0))
+        pipette.drop_tip()
 
-    protocol.pause('Seal. Incubate RT on ice 20 min. Resume.')
+    protocol.pause('Input-preparation checkpoint. No incubation program is included.')
 
-    protocol.pause('REACTION MIX in reagent reservoir A2.')
-
-    # Distribute Reaction Mix
+    # Synthetic genome-amplification stage
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
-        pipette.aspirate(6.0, reagent_res["A2"].bottom(z=5.0))
-        pipette.dispense(6.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.aspirate(10.0, profile_stages["A2"].bottom(z=5.0))
+        pipette.dispense(10.0, _col[0].bottom(z=5.0))
+        pipette.drop_tip()
 
-    protocol.pause('Seal/flick/spin. THERMAL CYCLER DNA Amplification (lid 70C): 30C 2.5h -> 65C 3min -> 4C. Return plate.')
+    protocol.pause('Genome-amplification checkpoint. No thermal program or QC threshold is included.')
 
-    protocol.pause('QC: Qubit HS >800 ng avg; Tapestation ~1275 bp. Prepare 2 ng/uL normalized plate. Return to B2.')
-
-    protocol.pause('DNA PREP MIX in reagent reservoir A3.')
-
-    # Distribute DNA Prep
+    # Synthetic library-construction stage
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
-        pipette.aspirate(5.0, reagent_res["A3"].bottom(z=5.0))
-        pipette.dispense(5.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.aspirate(10.0, profile_stages["A3"].bottom(z=5.0))
+        pipette.dispense(10.0, _col[0].bottom(z=5.0))
+        pipette.drop_tip()
 
-    protocol.pause('THERMAL CYCLER DNAPREP (lid 105C): 37C 10min -> 4C. Return on ice.')
+    protocol.pause('Library-construction checkpoint. No method program is included.')
 
-    protocol.pause('FERAT MIX in reagent reservoir A4.')
-
-    # Distribute FERAT + mix
+    # Synthetic PCR-enrichment stage
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
-        pipette.aspirate(5.0, reagent_res["A4"].bottom(z=5.0))
-        pipette.dispense(5.0, _col[0].bottom(z=5.0))
-        pipette.mix(5, 5, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.aspirate(10.0, profile_stages["A4"].bottom(z=5.0))
+        pipette.dispense(10.0, _col[0].bottom(z=5.0))
+        pipette.drop_tip()
 
-    protocol.pause('THERMAL CYCLER FERAT (lid 105C): 4C 30s -> 30C 5min -> 65C 30min -> 4C.')
+    protocol.pause('PCR-enrichment checkpoint. No cycle program is included.')
 
-    protocol.pause('Vortex adapter plate briefly. Spin down.')
-
-    # Distribute Adapters
+    # Synthetic cleanup addition
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
-        pipette.aspirate(5.0, reagent_res["A6"].bottom(z=5.0))
-        pipette.dispense(5.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
-
-    # Distribute LP2L
-    for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
-        pipette.pick_up_tip()
-        pipette.aspirate(5.0, reagent_res["A5"].bottom(z=5.0))
-        pipette.dispense(5.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
-
-    protocol.pause('Seal. Vortex medium. Spin. Incubate RT 15 min. Proceed.')
-
-    protocol.pause('AMP MIX in reagent reservoir A7. Start LIB-AMP, pause at 98C.')
-
-    # Distribute Amp Mix + mix
-    for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
-        pipette.pick_up_tip()
-        pipette.aspirate(20.0, reagent_res["A7"].bottom(z=5.0))
+        pipette.aspirate(20.0, cleanup_res["A1"].bottom(z=5.0))
         pipette.dispense(20.0, _col[0].bottom(z=5.0))
-        pipette.mix(5, 20, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.mix(3, 10.0, _col[0].bottom(z=5.0))
+        pipette.drop_tip()
 
-    protocol.pause('THERMAL CYCLER LIB-AMP (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.')
+    protocol.pause('Complete the synthetic separation handoff; no hold time is prescribed.')
 
-    protocol.pause('Vortex SPRI beads 10s. Fresh 80% EtOH in bead reservoir A2.')
-
-    # Add SPRI beads
+    # Synthetic supernatant removal
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
-        pipette.aspirate(30.0, bead_res["A1"].bottom(z=5.0))
-        pipette.dispense(30.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.aspirate(20.0, _col[0].bottom(z=5.0))
+        pipette.dispense(20.0, cleanup_res["A12"].bottom(z=5.0))
+        pipette.drop_tip()
 
-    protocol.pause('Seal. Vortex 10s. Incubate RT 5 min. Spin. Place plate ON Magnetic Block (C2). Wait 3 min until clear.')
-
-    # Remove supernatant to waste
+    # Synthetic wash addition
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
-        pipette.aspirate(70.0, _col[0].bottom(z=5.0))
-        pipette.dispense(70.0, bead_res["A12"].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.aspirate(20.0, cleanup_res["A2"].bottom(z=5.0))
+        pipette.dispense(20.0, _col[0].bottom(z=5.0))
+        pipette.drop_tip()
 
-    # EtOH wash 1 add
+    protocol.pause('Confirm the synthetic wash state; no hold time is prescribed.')
+
+    # Synthetic wash removal
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
-        pipette.aspirate(180.0, bead_res["A2"].bottom(z=5.0))
-        pipette.dispense(180.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.aspirate(20.0, _col[0].bottom(z=5.0))
+        pipette.dispense(20.0, cleanup_res["A12"].bottom(z=5.0))
+        pipette.drop_tip()
 
-    protocol.delay(seconds=30, msg='EtOH wash 1 soak')
+    protocol.pause('Complete the synthetic drying and off-magnet handoff; no timing criterion is prescribed.')
 
-    # EtOH wash 1 remove
+    # Synthetic elution addition
     for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
         pipette.pick_up_tip()
-        pipette.aspirate(180.0, _col[0].bottom(z=5.0))
-        pipette.dispense(180.0, bead_res["A12"].bottom(z=5.0))
-        pipette.return_tip()
+        pipette.aspirate(10.0, cleanup_res["A3"].bottom(z=5.0))
+        pipette.dispense(10.0, _col[0].bottom(z=5.0))
+        pipette.mix(3, 10.0, _col[0].bottom(z=5.0))
+        pipette.drop_tip()
 
-    # EtOH wash 2 add
-    for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
-        pipette.pick_up_tip()
-        pipette.aspirate(180.0, bead_res["A2"].bottom(z=5.0))
-        pipette.dispense(180.0, _col[0].bottom(z=5.0))
-        pipette.return_tip()
+    protocol.pause('Complete the synthetic elution handoff; no hold time is prescribed.')
 
-    protocol.delay(seconds=30, msg='EtOH wash 2 soak')
-
-    # EtOH wash 2 remove
-    for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
-        pipette.pick_up_tip()
-        pipette.aspirate(180.0, _col[0].bottom(z=5.0))
-        pipette.dispense(180.0, bead_res["A12"].bottom(z=5.0))
-        pipette.return_tip()
-
-    protocol.pause('Remove residual EtOH with P20. Air dry 3 min - do NOT over-dry.')
-
-    protocol.pause('Remove plate FROM magnet.')
-
-    # Add Elution Buffer + mix
-    for _col in [sample_plate.columns()[i] for i in range(NUM_COLUMNS)]:
-        pipette.pick_up_tip()
-        pipette.aspirate(42.0, bead_res["A3"].bottom(z=5.0))
-        pipette.dispense(42.0, _col[0].bottom(z=5.0))
-        pipette.mix(10, 35, _col[0].bottom(z=5.0))
-        pipette.return_tip()
-
-    protocol.pause('Incubate RT 2 min. Return to magnet. Wait 2 min until clear.')
-
-    # Transfer eluate -> output plate
+    # Synthetic output transfer
     for i in range(NUM_COLUMNS):
         _s = sample_plate.columns()[i][0]
         _d = output_plate.columns()[i][0]
         pipette.pick_up_tip()
-        pipette.aspirate(40.0, _s.bottom(z=5.0))
-        pipette.dispense(40.0, _d.bottom(z=5.0))
-        pipette.return_tip()
+        pipette.aspirate(10.0, _s.bottom(z=5.0))
+        pipette.dispense(10.0, _d.bottom(z=5.0))
+        pipette.drop_tip()
 
-    protocol.pause('DONE. POST-QC: Qubit HS + Tapestation HS D1000. Pool + final 0.75x cleanup before sequencing.')
+    protocol.pause('Motion profile complete. Apply no biological interpretation or public QC threshold.')
 
