@@ -1,8 +1,8 @@
 """
-Example orchestrator: TIP-seq pre-SPRI Qubit loop, closed.
+Example orchestrator: TIP-seq pre-SPRI DNA-quantification loop.
 
 Flow:
-  protocol pauses at the pre-SPRI Qubit checkpoint
+  protocol pauses at the pre-SPRI DNA-quantification checkpoint
     -> aliquot + dye into a read plate, read it
     -> CsvPlateReader parses the export -> {well: ng/uL}
     -> decisions.tipseq_pre_spri per well
@@ -48,7 +48,7 @@ def run(export_csv: Path, run_id: str, dry_run: bool = True) -> dict:
 
 def main():
     here = Path(__file__).resolve().parent
-    ap = argparse.ArgumentParser(description="TIP-seq pre-SPRI Qubit QC loop")
+    ap = argparse.ArgumentParser(description="TIP-seq pre-SPRI DNA-quantification QC loop")
     ap.add_argument("--export", type=Path,
                     default=here / "examples" / "sample_plate_read.csv",
                     help="CSV exported by the plate reader")

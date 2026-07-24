@@ -13,4 +13,3 @@ HTTP API: docs.opentrons.com -> Flex -> Additional Documentation. Interactive op
 
 ### Done when
 `run_qc_loop` runs against a real paused protocol and either resumes it or triggers a re-PCR from a live plate read; `--dry-run` still works with example data.
-cc @spacexengineer

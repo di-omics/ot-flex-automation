@@ -8,7 +8,7 @@ The **same** portable specs that drive the Opentrons Flex, retargeted to the
 
 ## Files
 - `whole_genome_seq_star_plr.py` - the full WGS preparation protocol on the STAR.
-- `wga_move_star_plr.py` - WGA distributes + an iSWAP/gripper plate move.
+- `wgs_preparation_move_star_plr.py` - WGS-preparation distributes + an iSWAP/gripper plate move.
 
 Regenerate any spec for the STAR:
 ```bash
