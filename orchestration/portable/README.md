@@ -1,36 +1,32 @@
-# portable - write the protocol once, run it on every platform
+# Portable protocol representation
 
-**The problem this solves:** the protocol's value is its *intent* - the ordered
-list of "move X µL from source to destination, mix, hand off for thermal
-cycling." But Opentrons Python, Hamilton Venus (STAR), and Agilent Bravo
-(VWorks) share **none** of their code. Hand-write the protocol per platform and
-you rewrite (and re-validate) it three times, and they drift apart.
+The protocol's reusable value is its intent: ordered transfers, mixes, delays,
+and off-deck handoffs. Robot APIs represent those actions differently, so this
+package captures the intent once and renders it through platform backends.
 
-**The fix:** capture the protocol once as a vendor-neutral **`ProtocolSpec`**
-(plain, serializable data - `spec.py`). Compile it to each platform with a
-**backend**. The Flex is our prototype rig; the Hamilton STAR / Bravo are where
-the 1-3% CV target is hit. The spec is the asset that survives the move.
+`ProtocolSpec` is plain serializable data defined in `spec.py`. Backends compile
+the same spec into an Opentrons protocol or a neutral worklist. Precision is
+validated independently on the selected execution platform.
 
 ```
                     ┌─────────────────────────┐
    examples/*.py ─▶ │   ProtocolSpec (spec.py) │ ─┐  the portable asset
                     │   volumes · src->dst · QC │  │  (also JSON: --target spec)
                     └─────────────────────────┘  │
-                                                  ├─▶ opentrons_backend  -> Flex .py (runs on Studio45)
-                                                  ├─▶ pylabrobot_backend -> Hamilton STAR .py (PyLabRobot)
-                                                  ├─▶ worklist_backend   -> CSV (STAR/Bravo import)
-                                                  └─▶ hamilton_backend   -> native Venus method (Phase 3)
+                                                  ├─▶ opentrons_backend  -> Flex .py
+                                                  ├─▶ worklist_backend   -> neutral CSV
+                                                  └─▶ hamilton_backend   -> Hamilton worklist
 ```
 
 ## Try it
 
 ```bash
 # Flex protocol (imports into the Opentrons App; simulates clean):
-python -m orchestration.portable.render --target opentrons --out flex_wga.py
-opentrons_simulate flex_wga.py
+python -m orchestration.portable.render --target opentrons --out flex_wgs_preparation.py
+opentrons_simulate flex_wgs_preparation.py
 
-# Hamilton STAR / Agilent Bravo worklist (vendor-neutral transfer list):
-python -m orchestration.portable.render --target worklist --out wga_worklist.csv
+# Neutral transfer worklist:
+python -m orchestration.portable.render --target worklist --out wgs_preparation_worklist.csv
 
 # the portable spec itself, as JSON:
 python -m orchestration.portable.render --target spec
@@ -38,13 +34,13 @@ python -m orchestration.portable.render --target spec
 
 ## What ports, concretely
 
-| Layer | Ports to STAR/Bravo? | How |
+| Layer | Portable? | How |
 |---|---|---|
-| Protocol intent (volumes, source->dest, order, handoffs) | ✅ 100% | the `ProtocolSpec` |
-| Execution today | ✅ now | `worklist` CSV -> Venus/VWorks worklist import |
-| Native method + accuracy tuning (liquid classes for 1-3% CV) | ⏳ Phase 3 | `hamilton_backend` (the seam, stubbed) |
-| Opentrons Python | ❌ | regenerated per platform from the spec - never hand-ported |
-| `orchestration/` decision + QC engine | ✅ already | sits above the handler; talks ng/µL, not pipettes |
+| Protocol intent (volumes, source-to-destination map, order, handoffs) | Yes | `ProtocolSpec` |
+| Neutral execution list | Yes | `worklist` CSV |
+| Platform method and liquid-class tuning | Backend-specific | Platform backend |
+| Opentrons Python | Regenerated | `opentrons_backend` |
+| QC decision engine | Yes | Operates on measurements rather than pipette APIs |
 
 ## Status
 
@@ -53,16 +49,15 @@ python -m orchestration.portable.render --target spec
 - `backends/worklist_backend.py` - renders a transfer worklist CSV. **Done.**
 - `backends/hamilton_backend.py` - native Venus = **stub** (Phase 3); interim
   worklist path works today.
-- `examples/whole_genome_seq_wga.py` - the WGA section, transcribed from
-  `protocols/whole_genome_seq_flex.py`. Extend to the full protocol next.
+- `examples/whole_genome_seq_preparation.py` - the genome-amplification section
+  represented with functional reagent names.
 
 ## Extending
 
 - **More steps:** add to an example's `steps=[...]`. `Transfer` (per-column
-  distribute) and `Handoff` (operator pause) cover the WGA motif; add step types
+  distribute) and `Handoff` (operator pause) cover the WGS-preparation motif; add step types
   (plate->plate, SPRI cleanup) as the encoded protocol grows.
-- **Full WGS preparation:** transcribe Sections 2-3 (library prep, bead cleanup) into
-  the spec, then the *same* spec drives Flex now and STAR/Bravo at port time.
+- **Full whole-genome sequencing preparation:** transcribe Sections 2-3 (library prep, bead cleanup) into
+  the spec, then the same spec can drive multiple backends.
 - **Native Hamilton:** fill in `hamilton_backend.render()` with a Venus method
-  template - labware->deck mapping, tip types, and liquid classes (the knobs that
-  buy the 1-3% CV the Flex can't reach).
+  template for labware mapping, tip types, and liquid classes.

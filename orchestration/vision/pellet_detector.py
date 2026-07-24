@@ -1,5 +1,5 @@
 """
-Vision backend for SPRI bead-pellet QC (Hunter's module).
+Vision backend for SPRI bead-pellet QC.
 
 Two questions the camera answers, mapped to existing protocol pauses:
   is_pellet_cleared(roi) -> bool   # 'wait until clear' on the magnet
@@ -10,7 +10,7 @@ Design rules:
     human confirms. Do NOT let this gate an aspirate until it's trusted -- a
     wrong 'cleared' call on the magnet vacuums up the beads.
   * Capture is decoupled from analysis. A FrameSource yields frames; backends
-    consume them. GoPro (USB webcam mode) or any UVC cam both work; a fixed
+    consume them. Any supported UVC camera can work; a fixed
     mount + controlled lighting matter more than the camera.
 
 OpenCVHeuristicDetector is a deliberately dumb baseline placeholder so the
@@ -66,10 +66,8 @@ class VisionBackend(ABC):
 
 
 # ---- stub frame source ---------------------------------------------------
-class GoProWebcam(FrameSource):  # pragma: no cover
-    """TODO(hunter): open the GoPro in Webcam mode as a UVC device
-    (cv2.VideoCapture(device_index)). NOTE: GoPros throttle on long continuous
-    runs -- for the 21 h IVT a fixed USB/industrial cam is more reliable."""
+class UvcCamera(FrameSource):  # pragma: no cover
+    """Open a supported UVC camera with ``cv2.VideoCapture(device_index)``."""
     def __init__(self, device_index: int = 0):
         self.device_index = device_index
 
@@ -95,10 +93,10 @@ class OpenCVHeuristicDetector(VisionBackend):  # pragma: no cover
             import numpy as np  # noqa: F401
         except ImportError as e:
             raise ImportError("pip install opencv-python numpy for the vision backend") from e
-        # TODO(hunter): crop ROI -> features -> trained classifier.
+        # TODO: crop ROI -> features -> trained classifier.
         raise NotImplementedError("baseline detector is a scaffold; see CV issue")
 
 
 if __name__ == "__main__":
-    print("vision scaffold loaded. Implement GoProWebcam + a trained detector.")
+    print("vision scaffold loaded. Implement UvcCamera + a trained detector.")
     print("Dryness states:", [d.value for d in Dryness])

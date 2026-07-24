@@ -1,5 +1,5 @@
 """AUTO-GENERATED from a portable ProtocolSpec - Hamilton STAR via PyLabRobot.
-Same protocol as the Flex build, retargeted to the STAR. Source: WGA Distributes + Gripper Move to Reader (Studio45).
+Same WGS-preparation distribution and plate move as the Flex build, retargeted to the STAR.
 Dry run: USE_CHATTERBOX=True (default). Real STAR: set it False.
 EDIT the DECK SETUP block (rails/carriers/labware) for your physical STAR."""
 import asyncio

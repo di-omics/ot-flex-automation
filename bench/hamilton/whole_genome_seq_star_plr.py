@@ -1,5 +1,5 @@
 """AUTO-GENERATED from a portable ProtocolSpec - Hamilton STAR via PyLabRobot.
-Same protocol as the Flex build, retargeted to the STAR. Source: Whole-genome sequencing - Full (portable, Studio45).
+Same whole-genome sequencing preparation as the Flex build, retargeted to the STAR.
 Dry run: USE_CHATTERBOX=True (default). Real STAR: set it False.
 EDIT the DECK SETUP block (rails/carriers/labware) for your physical STAR."""
 import asyncio
@@ -62,17 +62,17 @@ async def main():
         await lh.dispense(sample_plate[f"A{c}:H{c}"], vols=[6.0] * 8)
         await lh.return_tips()
     input('Seal/flick/spin. THERMAL CYCLER DNA Amplification (lid 70C): 30C 2.5h -> 65C 3min -> 4C. Return plate.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'Seal/flick/spin. THERMAL CYCLER DNA Amplification (lid 70C): 30C 2.5h -> 65C 3min -> 4C. Return plate.')
-    input('QC: Qubit HS >800 ng avg; Tapestation ~1275 bp. Prepare 2 ng/uL normalized plate. Return to B2.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'QC: Qubit HS >800 ng avg; Tapestation ~1275 bp. Prepare 2 ng/uL normalized plate. Return to B2.')
-    input('DNA PREP MIX in reagent reservoir A3.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'DNA PREP MIX in reagent reservoir A3.')
-    # Distribute DNA Prep
+    input('QC: quantify DNA and confirm the expected fragment profile. Prepare a 2 ng/uL normalized plate. Return to B2.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'QC: quantify DNA and confirm the expected fragment profile. Prepare a 2 ng/uL normalized plate. Return to B2.')
+    input('WGS PREPARATION MIX in reagent reservoir A3.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'WGS PREPARATION MIX in reagent reservoir A3.')
+    # Distribute WGS preparation
     for c in range(1, NUM_COLUMNS + 1):
         await _grab_tips()
         await lh.aspirate(reagent_res["A3"] * 8, vols=[5.0] * 8)
         await lh.dispense(sample_plate[f"A{c}:H{c}"], vols=[5.0] * 8)
         await lh.return_tips()
-    input('THERMAL CYCLER DNAPREP (lid 105C): 37C 10min -> 4C. Return on ice.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'THERMAL CYCLER DNAPREP (lid 105C): 37C 10min -> 4C. Return on ice.')
-    input('FERAT MIX in reagent reservoir A4.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'FERAT MIX in reagent reservoir A4.')
-    # Distribute FERAT + mix
+    input('THERMAL CYCLER END PREPARATION (lid 105C): 37C 10min -> 4C. Return on ice.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'THERMAL CYCLER END PREPARATION (lid 105C): 37C 10min -> 4C. Return on ice.')
+    input('REPAIR MIX in reagent reservoir A4.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'REPAIR MIX in reagent reservoir A4.')
+    # Distribute repair mix
     for c in range(1, NUM_COLUMNS + 1):
         await _grab_tips()
         await lh.aspirate(reagent_res["A4"] * 8, vols=[5.0] * 8)
@@ -81,7 +81,7 @@ async def main():
             await lh.aspirate(sample_plate[f"A{c}:H{c}"], vols=[5] * 8)
             await lh.dispense(sample_plate[f"A{c}:H{c}"], vols=[5] * 8)
         await lh.return_tips()
-    input('THERMAL CYCLER FERAT (lid 105C): 4C 30s -> 30C 5min -> 65C 30min -> 4C.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'THERMAL CYCLER FERAT (lid 105C): 4C 30s -> 30C 5min -> 65C 30min -> 4C.')
+    input('THERMAL CYCLER REPAIR (lid 105C): 4C 30s -> 30C 5min -> 65C 30min -> 4C.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'THERMAL CYCLER REPAIR (lid 105C): 4C 30s -> 30C 5min -> 65C 30min -> 4C.')
     input('Vortex adapter plate briefly. Spin down.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'Vortex adapter plate briefly. Spin down.')
     # Distribute Adapters
     for c in range(1, NUM_COLUMNS + 1):
@@ -89,15 +89,15 @@ async def main():
         await lh.aspirate(reagent_res["A6"] * 8, vols=[5.0] * 8)
         await lh.dispense(sample_plate[f"A{c}:H{c}"], vols=[5.0] * 8)
         await lh.return_tips()
-    # Distribute LP2L
+    # Distribute ligation reagent
     for c in range(1, NUM_COLUMNS + 1):
         await _grab_tips()
         await lh.aspirate(reagent_res["A5"] * 8, vols=[5.0] * 8)
         await lh.dispense(sample_plate[f"A{c}:H{c}"], vols=[5.0] * 8)
         await lh.return_tips()
     input('Seal. Vortex medium. Spin. Incubate RT 15 min. Proceed.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'Seal. Vortex medium. Spin. Incubate RT 15 min. Proceed.')
-    input('AMP MIX in reagent reservoir A7. Start LIB-AMP, pause at 98C.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'AMP MIX in reagent reservoir A7. Start LIB-AMP, pause at 98C.')
-    # Distribute Amp Mix + mix
+    input('LIBRARY AMPLIFICATION MIX in reagent reservoir A7. Start library amplification, pause at 98C.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'LIBRARY AMPLIFICATION MIX in reagent reservoir A7. Start library amplification, pause at 98C.')
+    # Distribute library amplification mix
     for c in range(1, NUM_COLUMNS + 1):
         await _grab_tips()
         await lh.aspirate(reagent_res["A7"] * 8, vols=[20.0] * 8)
@@ -106,7 +106,7 @@ async def main():
             await lh.aspirate(sample_plate[f"A{c}:H{c}"], vols=[20] * 8)
             await lh.dispense(sample_plate[f"A{c}:H{c}"], vols=[20] * 8)
         await lh.return_tips()
-    input('THERMAL CYCLER LIB-AMP (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'THERMAL CYCLER LIB-AMP (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.')
+    input('THERMAL CYCLER LIBRARY AMPLIFICATION (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'THERMAL CYCLER LIBRARY AMPLIFICATION (lid 105C): 98C 45s -> [98C 15s/60C 30s/72C 45s]x8 -> 72C 60s -> 4C. Return on ice.')
     input('Vortex SPRI magnetic cleanup beads 10s. Fresh 80% EtOH in bead reservoir A2.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'Vortex SPRI magnetic cleanup beads 10s. Fresh 80% EtOH in bead reservoir A2.')
     # Add SPRI magnetic cleanup beads
     for c in range(1, NUM_COLUMNS + 1):
@@ -165,7 +165,7 @@ async def main():
         await lh.aspirate(sample_plate[f"A{c}:H{c}"], vols=[40.0] * 8)
         await lh.dispense(output_plate[f"A{c}:H{c}"], vols=[40.0] * 8)
         await lh.return_tips()
-    input('DONE. POST-QC: Qubit HS + Tapestation HS D1000. Pool + final 0.75x cleanup before sequencing.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'DONE. POST-QC: Qubit HS + Tapestation HS D1000. Pool + final 0.75x cleanup before sequencing.')
+    input('DONE. POST-QC: quantify DNA and confirm the fragment profile. Pool and perform a final 0.75x cleanup before sequencing.' + ' [Enter]') if not USE_CHATTERBOX else print('PAUSE:', 'DONE. POST-QC: quantify DNA and confirm the fragment profile. Pool and perform a final 0.75x cleanup before sequencing.')
 
     await lh.stop()
 

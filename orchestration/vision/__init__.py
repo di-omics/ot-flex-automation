@@ -1,1 +1,1 @@
-"""Vision backends (bead-pellet / dryness QC). Hunter's module."""
+"""Vision backends for bead-pellet clearance and dryness QC."""
