@@ -5,21 +5,21 @@ Rendered-from-`orchestration/portable` specs, committed here so they can be
 no Python). Regenerate with, e.g.:
 
 ```bash
-python -m orchestration.portable.render --target opentrons --example hello --out bench/hello_water_flex.py
+python -m orchestration.portable.render --target opentrons --example hello --mount left --out bench/hello_water_flex.py
 ```
 
 ## hello_water_flex.py - Phase-0 motion test
 
-The smallest real test: pick up tips, move 20 µL water from reservoir A1 into
+The smallest real test: pick up tips, move 50 uL water from reservoir A1 into
 column 1 of the sample plate, drop tips. No reagents, no pauses. Simulates clean.
 
 **Deck:**
 | Slot | Labware |
 |------|---------|
-| A1, A2 | Opentrons Flex 200 µL filter tip racks |
+| A2 | Opentrons Flex 1000 uL tip rack |
 | B2 | NEST 96-well PCR plate, full skirt (empty destination) |
-| B3 | NEST 12-well reservoir - **water in A1** (use dyed water to see it) |
-| D1 | trash |
+| D2 | NEST 12-well reservoir - **water in A1** (use dyed water to see it) |
+| A3 | trash |
 
 **Pipette mount:** this artifact is rendered for the **left mount**. Re-render
 for a different mount with `--mount right`.

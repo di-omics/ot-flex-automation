@@ -45,7 +45,7 @@ Default deck:
 - Magnetic block: C2
 - Output plate: C3
 - Bead and wash reservoir: D2
-- Tip racks: A2 and A3
+- Tip racks: A1 and A2
 - Trash: D1
 
 The public B3 map uses A1 input preparation, A2 genome amplification, A3 library
@@ -78,7 +78,7 @@ TIP-seq uses three tip racks plus one mid-run refill for a single column.
 - Opentrons Magnetic Block GEN1
 - 12-well reservoirs
 - 96-well PCR plates
-- 200 µL filter-tip racks
+- 200 uL filter-tip racks (the alternate-deck WGS files and the bench/ files load 1000 uL tip racks)
 - External thermal cycler
 - Fluorometric DNA quantification and fragment-analysis instruments
 - Off-deck fragmentation equipment where required
@@ -98,6 +98,9 @@ Each profile is validated for required keys and safe pipette-volume bounds befor
 movement. Off-deck timing, thermal programs, chemistry, and acceptance criteria
 remain operator-supplied.
 
+Water-only files rendered from the portable specs, ready to import into the
+Opentrons App, are in [bench/](bench/).
+
 ## Portable orchestration
 
 `orchestration/portable/` represents transfer intent independently of a robot
@@ -114,6 +117,10 @@ spec is required for biological method values.
 These components are scaffolding for supervised, closed-loop runs. WGS decision
 logic requires a caller-supplied `WgsQcProfile`; the repository defines no
 default yield, fragment, or normalization target.
+
+Module status and a dry-run example are in
+[orchestration/README.md](orchestration/README.md); the draft design document
+is [docs/PRD.md](docs/PRD.md).
 
 ## Alternate-deck WGS variants
 
